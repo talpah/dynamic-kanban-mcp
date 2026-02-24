@@ -7,7 +7,7 @@ Provides type-safe validation and data structures
 from datetime import datetime
 from enum import StrEnum
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class Priority(StrEnum):
@@ -56,41 +56,9 @@ class Epic(StrEnum):
 class Task(BaseModel):
     """A kanban task with full validation"""
 
-    id: str = Field(..., min_length=1, max_length=50, description="Unique task identifier")
-    title: str = Field(..., min_length=1, max_length=100, description="Task title")
-    description: str = Field(..., min_length=1, max_length=1000, description="Task description")
-    priority: Priority = Field(default=Priority.MEDIUM, description="Task priority level")
-    effort: Effort = Field(default=Effort.M, description="Estimated effort required")
-    epic: Epic = Field(default=Epic.GENERAL, description="Epic category")
-    stage: int = Field(default=1, ge=1, le=6, description="Development stage (1-6)")
-    status: Status = Field(default=Status.BACKLOG, description="Current status")
-    dependencies: list[str] = Field(
-        default_factory=list, max_items=10, description="List of task IDs this task depends on"
-    )
-    acceptance: str = Field(
-        default="Feature works as described", max_length=500, description="Acceptance criteria"
-    )
-
-    @validator("dependencies")
-    def validate_dependencies(cls, v):
-        """Ensure dependencies are valid task IDs"""
-        if v:
-            # Remove duplicates and empty strings
-            v = list(set(dep.strip() for dep in v if dep.strip()))
-        return v
-
-    @validator("id")
-    def validate_id_format(cls, v):
-        """Ensure task ID follows proper format"""
-        if not v.replace("-", "").replace("_", "").isalnum():
-            raise ValueError(
-                "Task ID must contain only alphanumeric characters, hyphens, and underscores"
-            )
-        return v
-
-    class Config:
-        use_enum_values = True
-        json_schema_extra = {
+    model_config = ConfigDict(
+        use_enum_values=True,
+        json_schema_extra={
             "example": {
                 "id": "feature-1",
                 "title": "User Authentication",
@@ -103,20 +71,48 @@ class Task(BaseModel):
                 "dependencies": [],
                 "acceptance": "Users can register, login, and logout successfully",
             }
-        }
+        },
+    )
+
+    id: str = Field(..., min_length=1, max_length=50, description="Unique task identifier")
+    title: str = Field(..., min_length=1, max_length=100, description="Task title")
+    description: str = Field(..., min_length=1, max_length=1000, description="Task description")
+    priority: Priority = Field(default=Priority.MEDIUM, description="Task priority level")
+    effort: Effort = Field(default=Effort.M, description="Estimated effort required")
+    epic: Epic = Field(default=Epic.GENERAL, description="Epic category")
+    stage: int = Field(default=1, ge=1, le=6, description="Development stage (1-6)")
+    status: Status = Field(default=Status.BACKLOG, description="Current status")
+    dependencies: list[str] = Field(
+        default_factory=list, max_length=10, description="List of task IDs this task depends on"
+    )
+    acceptance: str = Field(
+        default="Feature works as described", max_length=500, description="Acceptance criteria"
+    )
+
+    @field_validator("dependencies")
+    @classmethod
+    def validate_dependencies(cls, v: list[str]) -> list[str]:
+        """Ensure dependencies are valid task IDs"""
+        if v:
+            v = list({dep.strip() for dep in v if dep.strip()})
+        return v
+
+    @field_validator("id")
+    @classmethod
+    def validate_id_format(cls, v: str) -> str:
+        """Ensure task ID follows proper format"""
+        if not v.replace("-", "").replace("_", "").isalnum():
+            raise ValueError(
+                "Task ID must contain only alphanumeric characters, hyphens, and underscores"
+            )
+        return v
 
 
 class ProjectConfig(BaseModel):
     """Project configuration data"""
 
-    project_name: str = Field(..., min_length=1, max_length=100, description="Project name")
-    project_type: str = Field(..., min_length=1, max_length=50, description="Type of project")
-    description: str | None = Field(default="", max_length=500, description="Project description")
-    created_at: datetime = Field(default_factory=datetime.now, description="Creation timestamp")
-    id: str = Field(..., min_length=1, max_length=20, description="Unique project identifier")
-
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "project_name": "My Web App",
                 "project_type": "web",
@@ -124,32 +120,32 @@ class ProjectConfig(BaseModel):
                 "id": "proj-123",
             }
         }
+    )
+
+    project_name: str = Field(..., min_length=1, max_length=100, description="Project name")
+    project_type: str = Field(..., min_length=1, max_length=50, description="Type of project")
+    description: str | None = Field(default="", max_length=500, description="Project description")
+    created_at: datetime = Field(default_factory=datetime.now, description="Creation timestamp")
+    id: str = Field(..., min_length=1, max_length=20, description="Unique project identifier")
 
 
 class BoardColumn(BaseModel):
     """A column in the kanban board"""
 
+    model_config = ConfigDict(
+        json_schema_extra={"example": {"id": "backlog", "name": "📋 Backlog", "emoji": "📋"}}
+    )
+
     id: str = Field(..., min_length=1, max_length=20, description="Column identifier")
     name: str = Field(..., min_length=1, max_length=50, description="Display name")
     emoji: str = Field(..., min_length=1, max_length=10, description="Emoji for the column")
-
-    class Config:
-        json_schema_extra = {"example": {"id": "backlog", "name": "📋 Backlog", "emoji": "📋"}}
 
 
 class BoardConfig(BaseModel):
     """Kanban board configuration"""
 
-    title: str = Field(default="Dynamic Kanban Board", max_length=100, description="Board title")
-    subtitle: str = Field(
-        default="Ready for your project", max_length=200, description="Board subtitle"
-    )
-    columns: list[BoardColumn] = Field(
-        default_factory=list, min_items=1, description="Board columns"
-    )
-
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "title": "🚀 My Project Kanban",
                 "subtitle": "Web Application Project",
@@ -162,10 +158,34 @@ class BoardConfig(BaseModel):
                 ],
             }
         }
+    )
+
+    title: str = Field(default="Dynamic Kanban Board", max_length=100, description="Board title")
+    subtitle: str = Field(
+        default="Ready for your project", max_length=200, description="Board subtitle"
+    )
+    columns: list[BoardColumn] = Field(
+        default_factory=list, min_length=1, description="Board columns"
+    )
 
 
 class ActivityEntry(BaseModel):
     """An activity log entry"""
+
+    model_config = ConfigDict(
+        populate_by_name=True,
+        json_schema_extra={
+            "example": {
+                "type": "card_moved",
+                "content": "Moved 'User Authentication' from backlog to progress",
+                "source": "autonomous",
+                "task_id": "feature-1",
+                "task_title": "User Authentication",
+                "from": "backlog",
+                "to": "progress",
+            }
+        },
+    )
 
     type: str = Field(..., description="Type of activity")
     content: str = Field(..., description="Human-readable description")
@@ -176,8 +196,6 @@ class ActivityEntry(BaseModel):
         default="autonomous", description="Source of the activity (autonomous, manual, ui)"
     )
     task_id: str | None = Field(default=None, description="Related task ID if applicable")
-
-    # Additional fields for specific activity types
     task_title: str | None = Field(
         default=None, description="Task title for task-related activities"
     )
@@ -191,60 +209,67 @@ class ActivityEntry(BaseModel):
     session_name: str | None = Field(
         default=None, description="Session name for session activities"
     )
-    duration: float | None = Field(default=None, description="Duration in seconds for session end")
-
-    class Config:
-        populate_by_name = True
-        schema_extra = {
-            "example": {
-                "type": "card_moved",
-                "content": "Moved 'User Authentication' from backlog to progress",
-                "source": "autonomous",
-                "task_id": "feature-1",
-                "task_title": "User Authentication",
-                "from": "backlog",
-                "to": "progress",
-            }
-        }
+    duration: float | None = Field(
+        default=None, description="Duration in seconds for session end"
+    )
 
 
 class DevelopmentNote(BaseModel):
     """A development note for a task"""
 
-    notes: str = Field(..., min_length=1, max_length=1000, description="Development notes")
-    timestamp: datetime = Field(default_factory=datetime.now, description="When the note was added")
-
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "notes": "Implemented JWT authentication, still working on refresh tokens",
                 "timestamp": "2023-10-01T10:30:00Z",
             }
         }
+    )
+
+    notes: str = Field(..., min_length=1, max_length=1000, description="Development notes")
+    timestamp: datetime = Field(
+        default_factory=datetime.now, description="When the note was added"
+    )
 
 
 class SessionData(BaseModel):
     """Development session information"""
 
-    name: str = Field(..., min_length=1, max_length=100, description="Session name")
-    start_time: datetime = Field(
-        default_factory=datetime.now, alias="startTime", description="Session start time"
-    )
-    tasks: list[str] = Field(default_factory=list, description="Task IDs worked on in this session")
-
-    class Config:
-        populate_by_name = True
-        schema_extra = {
+    model_config = ConfigDict(
+        populate_by_name=True,
+        json_schema_extra={
             "example": {
                 "name": "Stage 1 Core Development",
                 "startTime": "2023-10-01T09:00:00Z",
                 "tasks": ["feature-1", "feature-2"],
             }
-        }
+        },
+    )
+
+    name: str = Field(..., min_length=1, max_length=100, description="Session name")
+    start_time: datetime = Field(
+        default_factory=datetime.now, alias="startTime", description="Session start time"
+    )
+    tasks: list[str] = Field(
+        default_factory=list, description="Task IDs worked on in this session"
+    )
 
 
 class Metadata(BaseModel):
     """Metadata for the progress file"""
+
+    model_config = ConfigDict(
+        populate_by_name=True,
+        json_schema_extra={
+            "example": {
+                "lastUpdated": "2023-10-01T10:30:00Z",
+                "version": "1.0.0",
+                "autonomousMode": False,
+                "currentSession": None,
+                "projectName": "My Web App",
+            }
+        },
+    )
 
     last_updated: datetime = Field(
         default_factory=datetime.now, alias="lastUpdated", description="Last update timestamp"
@@ -265,23 +290,30 @@ class Metadata(BaseModel):
     mode_changed_at: datetime | None = Field(
         default=None, alias="modeChangedAt", description="When mode was changed"
     )
-    project_name: str | None = Field(default=None, alias="projectName", description="Project name")
-
-    class Config:
-        populate_by_name = True
-        schema_extra = {
-            "example": {
-                "lastUpdated": "2023-10-01T10:30:00Z",
-                "version": "1.0.0",
-                "autonomousMode": False,
-                "currentSession": None,
-                "projectName": "My Web App",
-            }
-        }
+    project_name: str | None = Field(
+        default=None, alias="projectName", description="Project name"
+    )
 
 
 class ProgressData(BaseModel):
     """Complete progress file structure"""
+
+    model_config = ConfigDict(
+        populate_by_name=True,
+        json_schema_extra={
+            "example": {
+                "boardState": {"feature-1": "progress", "feature-2": "backlog"},
+                "activity": [],
+                "metadata": {
+                    "lastUpdated": "2023-10-01T10:30:00Z",
+                    "version": "1.0.0",
+                    "autonomousMode": False,
+                },
+                "developmentNotes": {},
+                "timestamps": {},
+            }
+        },
+    )
 
     board_state: dict[str, str] = Field(
         default_factory=dict, alias="boardState", description="Task ID to status mapping"
@@ -295,25 +327,19 @@ class ProgressData(BaseModel):
         default_factory=dict, description="Timestamps for various events"
     )
 
-    class Config:
-        populate_by_name = True
-        schema_extra = {
-            "example": {
-                "boardState": {"feature-1": "progress", "feature-2": "backlog"},
-                "activity": [],
-                "metadata": {
-                    "lastUpdated": "2023-10-01T10:30:00Z",
-                    "version": "1.0.0",
-                    "autonomousMode": False,
-                },
-                "developmentNotes": {},
-                "timestamps": {},
-            }
-        }
-
 
 class DependencyValidation(BaseModel):
     """Result of dependency validation"""
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "valid": False,
+                "missing": ["feature-1"],
+                "circular": [["feature-2", "feature-3", "feature-2"]],
+            }
+        }
+    )
 
     valid: bool = Field(..., description="Whether dependencies are valid")
     missing: list[str] = Field(
@@ -323,18 +349,23 @@ class DependencyValidation(BaseModel):
         default_factory=list, description="List of circular dependency chains found"
     )
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "valid": False,
-                "missing": ["feature-1"],
-                "circular": [["feature-2", "feature-3", "feature-2"]],
-            }
-        }
-
 
 class BoardState(BaseModel):
     """Current state of the kanban board"""
+
+    model_config = ConfigDict(
+        populate_by_name=True,
+        json_schema_extra={
+            "example": {
+                "features": [],
+                "boardState": {},
+                "activity": [],
+                "metadata": {},
+                "isManualMode": False,
+                "pendingActions": 0,
+            }
+        },
+    )
 
     features: list[Task] = Field(default_factory=list, description="All tasks on the board")
     board_state: dict[str, str] = Field(
@@ -348,16 +379,3 @@ class BoardState(BaseModel):
     pending_actions: int = Field(
         default=0, alias="pendingActions", description="Number of pending actions"
     )
-
-    class Config:
-        populate_by_name = True
-        schema_extra = {
-            "example": {
-                "features": [],
-                "boardState": {},
-                "activity": [],
-                "metadata": {},
-                "isManualMode": False,
-                "pendingActions": 0,
-            }
-        }
