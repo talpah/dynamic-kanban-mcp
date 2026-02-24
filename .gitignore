@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Distribution
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Tools
+.ruff_cache/
+.nox/
+.pytest_cache/
+.mypy_cache/
+
+# Project data
+.kanban/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
