@@ -9,7 +9,7 @@ disable-model-invocation: true
 ## Context (auto-detected)
 
 - Project root: !`git rev-parse --show-toplevel 2>/dev/null || pwd`
-- Script: !`ls ~/.claude/plugins/marketplaces/dynamic-kanban-mcp/scripts/enable-kanban.sh ~/Projects/dynamic-kanban-mcp/scripts/enable-kanban.sh 2>/dev/null | head -1 || echo NOT_FOUND`
+- Script: !`ls ~/.claude/plugins/marketplaces/dynamic-kanban-mcp/scripts/enable-kanban.sh 2>/dev/null || ls ~/Projects/dynamic-kanban-mcp/scripts/enable-kanban.sh 2>/dev/null || echo NOT_FOUND`
 
 ## Steps
 
