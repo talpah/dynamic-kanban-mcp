@@ -1,30 +1,36 @@
 ---
 name: kanban:status
-description: Show the kanban board status for the current project — task counts, next task, board URL, and dashboard link
+description: Show the kanban board status — task counts, next task, board URL, and command reference
 disable-model-invocation: true
 ---
 
-Execute the following steps IN ORDER using your tools directly.
+Execute the following steps:
 
-## Step 1: Check if kanban MCP is available
+## Step 1: Call kanban_status
 
-Call the `kanban_status` MCP tool. If it fails with "tool not found" or "unknown tool", tell the user:
+Call the `kanban_status` MCP tool. If it fails with "tool not found", tell the user to run `/kanban:setup` first and stop.
 
-> The kanban MCP server is not running for this project. Run `/kanban:setup` to set it up, or `/kanban:start` to start it if already configured.
+Display the output verbatim.
 
-Stop here if the tool is unavailable.
+## Step 2: Append quick reference
 
-## Step 2: Display status
+After the status output, print this command reference:
 
-Call `kanban_status` and display the output verbatim.
+```
+── Kanban commands ──────────────────────────────
+/kanban:add [title]        add a task interactively
+/kanban:task [id]          view full task details
+/kanban:analyze [id]       generate implementation plan
+/kanban:validate [id|--all] check dependencies
+/kanban:session start|end  track a work session
+/kanban:init               set project metadata & columns
+/kanban:import [file]      bulk import tasks from JSON
+/kanban:setup              re-register MCP server
+```
 
 ## Step 3: Offer to open the board
 
-Extract the Board UI URL from the output (line starting with "🌐 Board UI:").
+Extract the Board UI URL (line starting with "🌐 Board UI:") and ask:
+"Open the board in the browser? [y/N]"
 
-Ask: "Open the board in the browser? [y/N]"
-
-If yes:
-```bash
-xdg-open <board_url>
-```
+If yes: `xdg-open <board_url>`
