@@ -628,13 +628,15 @@ function toggleMode() {
         indicator.innerHTML = '<span>👤</span><span id="mode-text">Manual Mode</span>';
         modeDescription.textContent = 'You control the kanban board - Claude is blocked';
         fab.classList.remove('hidden');
+        fab.title = 'Add task';
         kanbanBoard.classList.add('manual-mode');
     } else {
         // Switch to Autonomous Mode
         indicator.className = 'mode-indicator autonomous';
         indicator.innerHTML = '<span>🤖</span><span id="mode-text">Autonomous Mode</span>';
         modeDescription.textContent = 'Claude manages your kanban board';
-        fab.classList.add('hidden');
+        fab.classList.remove('hidden');
+        fab.title = 'Add to backlog';
         kanbanBoard.classList.remove('manual-mode');
         clearSelection(); // Clear any selections when switching modes
         
@@ -688,10 +690,11 @@ function handleAddTask(event) {
     
     // Sync with WebSocket if connected
     if (state.connected) {
-        sendWebSocketMessage({
-            type: 'manual_task_added',
-            task: taskData
-        });
+        if (state.isManualMode) {
+            sendWebSocketMessage({ type: 'manual_task_added', task: taskData });
+        } else {
+            sendWebSocketMessage({ type: 'add_to_backlog', task: taskData });
+        }
     }
     
     // Update UI

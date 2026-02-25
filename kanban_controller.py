@@ -1018,6 +1018,34 @@ class KanbanController:
 
     # ===== MANUAL MODE TASK MANAGEMENT =====
 
+    def add_to_backlog(self, task_data: dict) -> str:
+        """Add a task to the backlog regardless of current mode (user inbox)"""
+        if not task_data.get("id"):
+            task_data["id"] = f"task-{self.next_task_id}"
+            self.next_task_id += 1
+
+        task_data["status"] = "backlog"
+
+        self.features.append(task_data)
+        self._save_features_to_file()
+
+        progress = self.load_progress()
+        progress["boardState"][task_data["id"]] = "backlog"
+        progress["activity"].append(
+            {
+                "type": "task_added_to_backlog",
+                "taskId": task_data["id"],
+                "taskTitle": task_data["title"],
+                "source": "user",
+                "content": f"User added to backlog: {task_data['title']}",
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
+        self.save_progress(progress)
+        self._broadcast_to_websockets({"type": "board_updated", "data": self.get_board_state()})
+        self.logger.info(f"📥 Added to backlog: {task_data['title']}")
+        return f"✅ Task '{task_data['title']}' added to backlog"
+
     def add_manual_task(self, task_data: dict) -> str:
         """Add task created manually by user"""
         if not self.is_manual_mode:
@@ -1397,6 +1425,22 @@ class KanbanController:
         elif message_type == "clear_pending_actions":
             self.clear_pending_actions()
             await websocket.send(json.dumps({"type": "pending_actions_cleared", "success": True}))
+
+        # ===== BACKLOG INBOX (always allowed) =====
+        elif message_type == "add_to_backlog":
+            task_data = data.get("task", {})
+            result = self.add_to_backlog(task_data)
+
+            await websocket.send(
+                json.dumps(
+                    {
+                        "type": "add_to_backlog_response",
+                        "success": "✅" in result,
+                        "message": result,
+                        "taskId": task_data.get("id"),
+                    }
+                )
+            )
 
         # ===== MANUAL TASK MANAGEMENT MESSAGES =====
         elif message_type == "manual_task_added":
