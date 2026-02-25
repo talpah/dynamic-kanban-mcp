@@ -1912,6 +1912,7 @@ class KanbanController:
         if not self.websocket_clients:
             return
 
+        project_name, project_root = self._get_project_info()
         # Prepare notification data
         notification = {
             "type": "state_update",
@@ -1920,6 +1921,8 @@ class KanbanController:
                 "boardState": progress_data["boardState"],
                 "activity": progress_data["activity"],
                 "metadata": progress_data["metadata"],
+                "project_name": project_name,
+                "project_root": project_root,
             },
         }
 
@@ -1935,6 +1938,7 @@ class KanbanController:
         if not self.websocket_clients:
             return
 
+        project_name, project_root = self._get_project_info()
         # Prepare notification data
         notification = {
             "type": "state_update",
@@ -1943,6 +1947,8 @@ class KanbanController:
                 "boardState": progress_data["boardState"],
                 "activity": progress_data["activity"],
                 "metadata": progress_data["metadata"],
+                "project_name": project_name,
+                "project_root": project_root,
             },
         }
 
