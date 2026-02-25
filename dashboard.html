@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kanban Dashboard</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, sans-serif; background: #0f1117; color: #e2e8f0; min-height: 100vh; }
+
+  header { display: flex; align-items: center; justify-content: space-between;
+           padding: 16px 24px; background: #1a1d27; border-bottom: 1px solid #2d3748; }
+  header h1 { font-size: 1.4rem; font-weight: 700; color: #a78bfa; }
+  #conn-status { font-size: 0.8rem; color: #64748b; }
+  #conn-status.ok { color: #34d399; }
+
+  main { padding: 24px; }
+  h2 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b;
+       margin-bottom: 16px; }
+
+  #grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+
+  .card { background: #1a1d27; border: 1px solid #2d3748; border-radius: 12px; padding: 18px;
+          transition: border-color 0.2s; }
+  .card:hover { border-color: #4c5568; }
+  .card.connected { border-left: 3px solid #34d399; }
+  .card.disconnected { border-left: 3px solid #4a5568; opacity: 0.7; }
+
+  .card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .dot.green { background: #34d399; box-shadow: 0 0 6px #34d399; }
+  .dot.grey { background: #4a5568; }
+  .card-title { font-weight: 600; font-size: 1rem; color: #f1f5f9; }
+  .card-port { font-size: 0.75rem; color: #64748b; margin-left: auto; }
+
+  .counts { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .badge { font-size: 0.72rem; padding: 2px 8px; border-radius: 9999px;
+           background: #2d3748; color: #94a3b8; }
+  .badge.progress { background: #1e3a5f; color: #60a5fa; }
+  .badge.done { background: #14532d; color: #4ade80; }
+
+  .doing-list { margin-bottom: 10px; }
+  .doing-item { font-size: 0.8rem; color: #e2e8f0; padding: 3px 0;
+                border-left: 2px solid #60a5fa; padding-left: 8px; margin-bottom: 4px;
+                white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .last-activity { font-size: 0.72rem; color: #64748b; margin-bottom: 12px;
+                   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .open-btn { display: inline-block; font-size: 0.78rem; color: #a78bfa; text-decoration: none;
+              padding: 4px 12px; border: 1px solid #6d44bc; border-radius: 6px;
+              transition: background 0.15s; }
+  .open-btn:hover { background: #2d1f4e; }
+
+  #empty { color: #64748b; font-size: 0.9rem; padding: 40px 0; text-align: center; }
+</style>
+</head>
+<body>
+<header>
+  <h1>📊 Kanban Dashboard</h1>
+  <span id="conn-status">Loading…</span>
+</header>
+<main>
+  <h2>Active Projects</h2>
+  <div id="grid"></div>
+  <div id="empty" style="display:none">No active kanban servers found.</div>
+</main>
+
+<script>
+const POLL_INTERVAL = 10000;
+
+// project_key → { entry (registry), ws, state, card }
+const projects = new Map();
+
+async function fetchRegistry() {
+  const url = `${window.location.protocol}//${window.location.host}/api/registry`;
+  const res = await fetch(url);
+  return res.json();
+}
+
+function formatCounts(counts) {
+  const order = ['backlog', 'ready', 'progress', 'testing', 'done'];
+  const labels = { backlog: '📋', ready: '⚡', progress: '🔧', testing: '🧪', done: '✅' };
+  return order
+    .filter(k => counts[k] > 0)
+    .map(k => `<span class="badge ${k}">${labels[k]} ${counts[k]}</span>`)
+    .join('');
+}
+
+function renderCard(key) {
+  const p = projects.get(key);
+  if (!p) return;
+  const { entry, state: st, ws } = p;
+  const connected = ws && ws.readyState === WebSocket.OPEN;
+
+  let card = document.getElementById(`card-${key}`);
+  if (!card) {
+    card = document.createElement('div');
+    card.id = `card-${key}`;
+    card.className = 'card';
+    document.getElementById('grid').appendChild(card);
+    document.getElementById('empty').style.display = 'none';
+  }
+  p.card = card;
+  card.className = `card ${connected ? 'connected' : 'disconnected'}`;
+
+  const counts = st ? computeCounts(st.features || [], st.boardState || {}) : {};
+  const doing = st ? (st.features || []).filter(f => (st.boardState || {})[f.id] === 'progress').map(f => f.title) : [];
+  const activity = st && st.activity && st.activity.length > 0
+    ? st.activity[st.activity.length - 1].action || ''
+    : '';
+
+  card.innerHTML = `
+    <div class="card-header">
+      <span class="dot ${connected ? 'green' : 'grey'}"></span>
+      <span class="card-title">${esc(entry.project_name)}</span>
+      <span class="card-port">:${entry.port}</span>
+    </div>
+    <div class="counts">${formatCounts(counts)}</div>
+    ${doing.length > 0 ? `<div class="doing-list">${doing.slice(0, 3).map(t => `<div class="doing-item">${esc(t)}</div>`).join('')}</div>` : ''}
+    ${activity ? `<div class="last-activity">↻ ${esc(activity)}</div>` : ''}
+    <a class="open-btn" href="http://127.0.0.1:${entry.port}/" target="_blank">Open Board →</a>
+  `;
+}
+
+function computeCounts(features, boardState) {
+  const counts = {};
+  features.forEach(f => {
+    const s = boardState[f.id] || f.status || 'backlog';
+    counts[s] = (counts[s] || 0) + 1;
+  });
+  return counts;
+}
+
+function esc(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function connectToProject(entry) {
+  const key = String(entry.port);
+  if (projects.has(key)) {
+    const p = projects.get(key);
+    p.entry = entry;
+    if (p.ws && p.ws.readyState !== WebSocket.CLOSED) return;
+  }
+
+  const wsUrl = `ws://127.0.0.1:${entry.port}`;
+  const ws = new WebSocket(wsUrl);
+  const proj = { entry, ws, state: null, card: null };
+  projects.set(key, proj);
+
+  ws.onopen = () => { renderCard(key); };
+
+  ws.onmessage = (evt) => {
+    try {
+      const msg = JSON.parse(evt.data);
+      if (msg.type === 'initial_state' || msg.type === 'state_update') {
+        proj.state = msg.data;
+        renderCard(key);
+      }
+    } catch (_) {}
+  };
+
+  ws.onclose = () => {
+    renderCard(key);
+    // Reconnect after 5s
+    setTimeout(() => {
+      if (projects.has(key)) connectToProject(projects.get(key).entry);
+    }, 5000);
+  };
+
+  ws.onerror = () => { ws.close(); };
+}
+
+function removeStaleCards(activeKeys) {
+  for (const key of [...projects.keys()]) {
+    if (!activeKeys.has(key)) {
+      const p = projects.get(key);
+      if (p.ws) p.ws.close();
+      if (p.card) p.card.remove();
+      projects.delete(key);
+    }
+  }
+  if (projects.size === 0) {
+    document.getElementById('empty').style.display = 'block';
+  }
+}
+
+async function poll() {
+  const status = document.getElementById('conn-status');
+  try {
+    const servers = await fetchRegistry();
+    status.textContent = `${servers.length} server(s) • ${new Date().toLocaleTimeString()}`;
+    status.className = 'ok';
+
+    const activeKeys = new Set(servers.map(s => String(s.port)));
+    removeStaleCards(activeKeys);
+    servers.forEach(s => connectToProject(s));
+  } catch (e) {
+    status.textContent = 'Registry unreachable';
+    status.className = '';
+  }
+}
+
+poll();
+setInterval(poll, POLL_INTERVAL);
+</script>
+</body>
+</html>

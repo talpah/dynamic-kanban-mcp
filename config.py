@@ -5,6 +5,7 @@ Ensures consistent settings across all components
 """
 
 import os
+from pathlib import Path
 from typing import Any
 
 
@@ -15,15 +16,24 @@ class KanbanConfig:
     WEBSOCKET_PORT = int(os.getenv("KANBAN_WEBSOCKET_PORT", "8765"))
     WEBSOCKET_HOST = os.getenv("KANBAN_WEBSOCKET_HOST", "0.0.0.0")
 
+    # Dashboard/Registry Configuration
+    DASHBOARD_PORT = int(os.getenv("KANBAN_DASHBOARD_PORT", "8700"))
+    REGISTRY_PATH = Path.home() / ".kanban" / "registry.json"
+
     # File Paths - Use absolute paths relative to script directory
     @classmethod
     def get_progress_file_path(cls):
-        from pathlib import Path
-
         data_dir = os.getenv("KANBAN_DATA_DIR")
         if data_dir:
             return str(Path(data_dir) / "kanban-progress.json")
         return str(Path(__file__).parent / "kanban-progress.json")
+
+    @classmethod
+    def get_features_file_path(cls):
+        data_dir = os.getenv("KANBAN_DATA_DIR")
+        if data_dir:
+            return str(Path(data_dir) / "features.json")
+        return str(Path(__file__).parent / "features.json")
 
     @classmethod
     def get_ui_file_path_static(cls):

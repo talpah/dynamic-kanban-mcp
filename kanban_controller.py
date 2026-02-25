@@ -5,6 +5,7 @@ Autonomous development interface for any project's Kanban board
 """
 
 import asyncio
+import atexit
 import contextlib
 import json
 import logging
@@ -12,12 +13,15 @@ import os
 import threading
 import time
 from datetime import datetime
+from http import HTTPStatus
 from pathlib import Path
 from typing import Any
 
 import websockets
 from websockets.asyncio.server import ServerConnection
+from websockets.http11 import Request, Response
 
+import registry
 from config import CONFIG
 from models import DependencyValidation
 
@@ -29,6 +33,7 @@ class KanbanController:
         self.features = self._load_features()
         self.websocket_clients: set[ServerConnection] = set()
         self.websocket_server = None
+        self.dashboard_server = None
         self.lock = threading.Lock()
         self.mcp_server = mcp_server  # Reference to MCP server for tool handlers
 
@@ -41,11 +46,73 @@ class KanbanController:
         logging.basicConfig(level=logging.INFO)
         self.logger = logging.getLogger("kanban_controller")
 
+        # Load static assets into memory for HTTP serving
+        self._board_html = self._read_static("kanban-board.html")
+        self._board_js = self._read_static("kanban-board.js")
+        self._dashboard_html = self._read_static("dashboard.html")
+
+    def _read_static(self, filename: str) -> str:
+        """Read a static file from the server directory into a string."""
+        path = Path(__file__).parent / filename
+        try:
+            return path.read_text(encoding="utf-8")
+        except FileNotFoundError:
+            self.logger.warning(f"Static file not found: {path}")
+            return f"<!-- {filename} not found -->"
+
+    def _make_response(
+        self, connection: ServerConnection, status: HTTPStatus, body: str, content_type: str
+    ) -> Response:
+        """Create an HTTP response with the given content type."""
+        response = connection.respond(status, body)
+        del response.headers["content-type"]
+        response.headers["Content-Type"] = content_type
+        return response
+
+    def _http_handler(self, connection: ServerConnection, request: Request) -> Response | None:
+        """Handle HTTP requests; return None to let WebSocket handshake proceed."""
+        path = request.path.split("?")[0]  # strip query string
+
+        if path in ("/", "/index.html"):
+            return self._make_response(
+                connection, HTTPStatus.OK, self._board_html, "text/html; charset=utf-8"
+            )
+        if path == "/kanban-board.js":
+            return self._make_response(
+                connection, HTTPStatus.OK, self._board_js, "application/javascript; charset=utf-8"
+            )
+        if path == "/dashboard":
+            return self._make_response(
+                connection, HTTPStatus.OK, self._dashboard_html, "text/html; charset=utf-8"
+            )
+        if path == "/api/status":
+            body = json.dumps(self._get_status_summary())
+            return self._make_response(connection, HTTPStatus.OK, body, "application/json")
+        if path == "/api/registry":
+            body = json.dumps(registry.get_active_servers())
+            return self._make_response(connection, HTTPStatus.OK, body, "application/json")
+        # Let WebSocket handshake proceed
+        return None
+
+    def _get_status_summary(self) -> dict[str, Any]:
+        """Return a brief status dict for /api/status."""
+        progress = self.load_progress()
+        board_state = progress.get("boardState", {})
+        counts: dict[str, int] = {}
+        for status in board_state.values():
+            counts[status] = counts.get(status, 0) + 1
+        return {
+            "port": self.websocket_port,
+            "pid": os.getpid(),
+            "features_total": len(self.features),
+            "status_counts": counts,
+        }
+
     def _load_features(self) -> list[dict]:
         """Load feature definitions from features.json file if available,
         or attempt to reconstruct from progress file"""
         try:
-            features_file = Path(__file__).parent / "features.json"
+            features_file = Path(CONFIG.get_features_file_path())
             if features_file.exists():
                 with open(features_file, encoding="utf-8") as f:
                     return json.load(f)
@@ -112,7 +179,8 @@ class KanbanController:
     def _save_features_to_file(self):
         """Save current features to features.json file for persistence"""
         try:
-            features_file = Path(__file__).parent / "features.json"
+            features_file = Path(CONFIG.get_features_file_path())
+            features_file.parent.mkdir(parents=True, exist_ok=True)
             with open(features_file, "w", encoding="utf-8") as f:
                 json.dump(self.features, f, indent=2)
             self.logger.info(f"Saved {len(self.features)} features to {features_file}")
@@ -1242,46 +1310,84 @@ class KanbanController:
 
         print()
 
+    def _get_project_info(self) -> tuple[str, str]:
+        """Derive (project_name, project_root) from environment or progress file path."""
+        data_dir_str = os.getenv("KANBAN_DATA_DIR")
+        if data_dir_str:
+            project_root = str(Path(data_dir_str).parent)
+            project_name = Path(data_dir_str).parent.name
+        else:
+            project_root = str(Path(__file__).parent)
+            project_name = Path(__file__).parent.name
+        return project_name, project_root
+
     async def start_websocket_server(self):
-        """Start WebSocket server for real-time updates with fallback port selection"""
+        """Start HTTP+WebSocket server with fallback port selection, then claim dashboard port."""
         original_port = self.websocket_port
 
         for _attempt in range(5):  # Try up to 5 different ports
             try:
                 self.websocket_server = await websockets.serve(
-                    self._handle_websocket_connection, CONFIG.WEBSOCKET_HOST, self.websocket_port
+                    self._handle_websocket_connection,
+                    CONFIG.WEBSOCKET_HOST,
+                    self.websocket_port,
+                    process_request=self._http_handler,
                 )
-                self.logger.info(
-                    f"WebSocket server started on {CONFIG.WEBSOCKET_HOST}:{self.websocket_port}"
-                )
-                return
+                self.logger.info(f"HTTP+WebSocket server started on port {self.websocket_port}")
+                break
             except OSError as e:
-                if "Address already in use" in str(e):
+                import errno as _errno
+
+                if e.errno == _errno.EADDRINUSE:
                     self.logger.warning(
                         f"Port {self.websocket_port} is in use, trying {self.websocket_port + 1}"
                     )
                     self.websocket_port += 1
                 else:
-                    self.logger.error(
-                        f"Failed to start WebSocket server on port {self.websocket_port}: {e}"
-                    )
-                    break
+                    self.logger.error(f"Failed to start server on port {self.websocket_port}: {e}")
+                    return
             except Exception as e:
-                self.logger.error(f"Unexpected error starting WebSocket server: {e}")
-                break
+                self.logger.error(f"Unexpected error starting server: {e}")
+                return
+        else:
+            self.logger.error(
+                f"Failed to start server after trying ports {original_port}-{self.websocket_port}"
+            )
+            self.websocket_port = original_port
+            return
 
-        # If we get here, all attempts failed
-        self.logger.error(
-            f"Failed to start WebSocket server after trying ports"
-            f" {original_port}-{self.websocket_port}"
-        )
-        self.websocket_port = original_port  # Reset to original port
+        # Try to claim the shared dashboard port (first server wins)
+        try:
+            self.dashboard_server = await websockets.serve(
+                self._handle_websocket_connection,
+                CONFIG.WEBSOCKET_HOST,
+                CONFIG.DASHBOARD_PORT,
+                process_request=self._http_handler,
+            )
+            self.logger.info(f"Dashboard server claimed port {CONFIG.DASHBOARD_PORT}")
+        except OSError:
+            self.dashboard_server = None
+            self.logger.info(f"Dashboard port {CONFIG.DASHBOARD_PORT} already claimed")
+
+        # Register in shared registry
+        project_name, project_root = self._get_project_info()
+        pid = os.getpid()
+        registry.register(project_name, project_root, self.websocket_port, pid)
+        atexit.register(registry.deregister, pid)
 
     async def stop_websocket_server(self):
-        """Stop WebSocket server"""
+        """Stop HTTP+WebSocket servers and deregister from registry."""
+        registry.deregister(os.getpid())
+
+        if self.dashboard_server:
+            self.dashboard_server.close()
+            await self.dashboard_server.wait_closed()
+            self.dashboard_server = None
+
         if self.websocket_server:
             self.websocket_server.close()
             await self.websocket_server.wait_closed()
+            self.websocket_server = None
             self.logger.info("WebSocket server stopped")
 
     async def _handle_websocket_connection(self, websocket):

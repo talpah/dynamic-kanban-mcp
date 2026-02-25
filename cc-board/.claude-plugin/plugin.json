@@ -1,0 +1,16 @@
+{
+  "name": "kanban",
+  "version": "2.0.0",
+  "description": "Per-project kanban board for Claude Code, backed by dynamic-kanban-mcp",
+  "author": {
+    "name": "Cosmin",
+    "url": "https://github.com/talpah"
+  },
+  "commands": [
+    "./commands/setup.md",
+    "./commands/status.md",
+    "./commands/start.md",
+    "./commands/stop.md",
+    "./commands/uninstall.md"
+  ]
+}

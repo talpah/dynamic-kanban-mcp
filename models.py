@@ -209,9 +209,7 @@ class ActivityEntry(BaseModel):
     session_name: str | None = Field(
         default=None, description="Session name for session activities"
     )
-    duration: float | None = Field(
-        default=None, description="Duration in seconds for session end"
-    )
+    duration: float | None = Field(default=None, description="Duration in seconds for session end")
 
 
 class DevelopmentNote(BaseModel):
@@ -227,9 +225,7 @@ class DevelopmentNote(BaseModel):
     )
 
     notes: str = Field(..., min_length=1, max_length=1000, description="Development notes")
-    timestamp: datetime = Field(
-        default_factory=datetime.now, description="When the note was added"
-    )
+    timestamp: datetime = Field(default_factory=datetime.now, description="When the note was added")
 
 
 class SessionData(BaseModel):
@@ -250,9 +246,7 @@ class SessionData(BaseModel):
     start_time: datetime = Field(
         default_factory=datetime.now, alias="startTime", description="Session start time"
     )
-    tasks: list[str] = Field(
-        default_factory=list, description="Task IDs worked on in this session"
-    )
+    tasks: list[str] = Field(default_factory=list, description="Task IDs worked on in this session")
 
 
 class Metadata(BaseModel):
@@ -290,9 +284,7 @@ class Metadata(BaseModel):
     mode_changed_at: datetime | None = Field(
         default=None, alias="modeChangedAt", description="When mode was changed"
     )
-    project_name: str | None = Field(
-        default=None, alias="projectName", description="Project name"
-    )
+    project_name: str | None = Field(default=None, alias="projectName", description="Project name")
 
 
 class ProgressData(BaseModel):

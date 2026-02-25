@@ -51,7 +51,12 @@ function connectWebSocket() {
             state.reconnectTimer = null;
         }
         
-        state.socket = new WebSocket(`ws://127.0.0.1:${CONFIG.websocketPort}`);
+        // When served over HTTP, connect to the same host (same port handles both HTTP and WS).
+        // Fall back to hardcoded port when opened as a local file://.
+        const wsUrl = window.location.protocol === 'file:'
+            ? `ws://127.0.0.1:${CONFIG.websocketPort}`
+            : `ws://${window.location.host}`;
+        state.socket = new WebSocket(wsUrl);
         
         state.socket.onopen = function(event) {
             console.log('✅ WebSocket connected');

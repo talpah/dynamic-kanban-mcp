@@ -670,7 +670,9 @@ features manually."""
         completion_percent = f"({done / total * 100:.1f}%)" if total > 0 else "(0.0%)"
 
         websocket_status = f"\n🔗 WebSocket Clients: {len(self.kanban.websocket_clients)} connected"
-        board_url = f"\n🌐 Board UI: file://{CONFIG.get_ui_file_path_static()}"
+        port = self.kanban.websocket_port
+        board_url = f"\n🌐 Board UI: http://127.0.0.1:{port}/"
+        dashboard_url = f"\n📊 Dashboard: http://127.0.0.1:{CONFIG.DASHBOARD_PORT}/"
 
         return f"""🚀 {project_title} Development Status
 {"=" * 50}
@@ -681,7 +683,7 @@ features manually."""
 ⚡ Ready: {status_counts.get("ready", 0)}
 🧪 Testing: {status_counts.get("testing", 0)}
 
-🎯 Next Task: {next_task_info}{session_info}{websocket_status}{board_url}
+🎯 Next Task: {next_task_info}{session_info}{websocket_status}{board_url}{dashboard_url}
 
 Recent Activity: {len(progress.get("activity", []))} actions logged"""
 

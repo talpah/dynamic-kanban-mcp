@@ -29,3 +29,11 @@ env/
 .idea/
 *.swp
 *.swo
+
+# Claude Code local settings
+.claude/
+
+# Runtime data
+*.json.tmp
+/features.json
+/kanban-progress.json
