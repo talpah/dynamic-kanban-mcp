@@ -76,6 +76,8 @@ When the user asks to "do all tasks" or work through multiple tasks:
 - Only then advance the next `ready` task to `progress`
 - Never put multiple tasks in `progress` simultaneously unless explicitly asked to work in parallel
 
+Before starting any non-trivial task the user requests, check if it already exists on the board. If not, call `add_feature` to create it, then move it to `progress` before beginning.
+
 ## Development
 
 When modifying the plugin:

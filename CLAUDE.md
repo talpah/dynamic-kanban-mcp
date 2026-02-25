@@ -15,5 +15,7 @@ Key tools:
 
 Task sequencing: move **one** task to `progress` at a time. Only advance the next `ready` task after the current one is `done`.
 
+**New work:** before starting any non-trivial task the user requests, check if it already exists on the board. If not, call `add_feature` to create it, then move it to `progress` before beginning.
+
 Board data: `.kanban/kanban-progress.json`
 Board UI: run `kanban_status` after session start to get the HTTP URL.

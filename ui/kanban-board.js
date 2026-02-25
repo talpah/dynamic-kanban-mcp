@@ -314,11 +314,10 @@ function createColumns() {
             <div class="column-header">
                 ${column.name}
                 <span class="column-count">0</span>
-                ${isBacklog ? `<button class="column-quick-add-btn" onclick="toggleQuickAdd()" title="Quick add">+</button>` : ''}
                 <button class="column-clear-btn" onclick="showClearColumnModal('${column.id}')" title="Clear ${column.name}">×</button>
             </div>
-            ${isBacklog ? `<div class="quick-add-row" id="quick-add-row">
-                <input class="quick-add-input" id="quick-add-input" type="text" placeholder="Task title…" maxlength="120"
+            ${isBacklog ? `<div class="quick-add-row">
+                <input class="quick-add-input" id="quick-add-input" type="text" placeholder="+ Add task…" maxlength="120"
                        onkeydown="handleQuickAddKey(event)">
                 <button class="quick-add-submit" onclick="submitQuickAdd()">Add</button>
             </div>` : ''}
@@ -666,17 +665,8 @@ function toggleMode() {
 }
 
 // Manual Mode - Task Management
-function toggleQuickAdd() {
-    const row = document.getElementById('quick-add-row');
-    const input = document.getElementById('quick-add-input');
-    if (!row) return;
-    const open = row.classList.toggle('open');
-    if (open) { input.focus(); } else { input.value = ''; }
-}
-
 function handleQuickAddKey(event) {
     if (event.key === 'Enter') { event.preventDefault(); submitQuickAdd(); }
-    if (event.key === 'Escape') { toggleQuickAdd(); }
 }
 
 function submitQuickAdd() {
@@ -704,8 +694,9 @@ function submitQuickAdd() {
     }
     createColumns();
     renderCards();
-    input.value = '';
-    input.focus();
+    // Get fresh reference after DOM rebuild
+    const freshInput = document.getElementById('quick-add-input');
+    if (freshInput) freshInput.focus();
 }
 
 function openAddTaskModal() {
