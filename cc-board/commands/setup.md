@@ -4,51 +4,35 @@ description: Set up a kanban board for the current project — registers the MCP
 disable-model-invocation: true
 ---
 
-**IMPORTANT: Do NOT create any JSON files. Do NOT create .mcp.json. Do NOT create board.json. Do NOT use npx. The ONLY action is to run the enable-kanban.sh shell script.**
+**IMPORTANT: Do NOT create any JSON files. Do NOT create .mcp.json. Do NOT use npx. Run enable-kanban.sh as shown below.**
 
-Execute the following steps IN ORDER using your tools directly.
+## Context (auto-detected)
 
-## Step 1: Detect project root
+- Project root: !`git rev-parse --show-toplevel 2>/dev/null || pwd`
+- Script: !`ls ~/.claude/plugins/marketplaces/dynamic-kanban-mcp/scripts/enable-kanban.sh ~/Projects/dynamic-kanban-mcp/scripts/enable-kanban.sh 2>/dev/null | head -1 || echo NOT_FOUND`
 
-Run: `git rev-parse --show-toplevel`
+## Steps
 
-If it fails, run: `pwd`
+### If Script shows NOT_FOUND
 
-Store result as PROJECT_ROOT.
-
-## Step 2: Locate enable-kanban.sh
-
-Check each path until FOUND:
-
-```bash
-ls ~/Projects/dynamic-kanban-mcp/scripts/enable-kanban.sh 2>/dev/null && echo FOUND || echo NOT_FOUND
-```
-
-If NOT_FOUND:
-```bash
-ls ~/.claude/plugins/marketplaces/dynamic-kanban-mcp/scripts/enable-kanban.sh 2>/dev/null && echo FOUND || echo NOT_FOUND
-```
-
-If NOT_FOUND, clone:
+Clone the repo first:
 ```bash
 git clone https://github.com/talpah/dynamic-kanban-mcp ~/.local/share/dynamic-kanban-mcp
 ```
-Then SCRIPT_PATH = `~/.local/share/dynamic-kanban-mcp/scripts/enable-kanban.sh`.
+Then use `~/.local/share/dynamic-kanban-mcp/scripts/enable-kanban.sh` as the script path.
 
-## Step 3: Run the setup script
+### Run the setup script
 
 ```bash
-bash SCRIPT_PATH PROJECT_ROOT
+bash <Script> <Project root>
 ```
 
-Replace SCRIPT_PATH and PROJECT_ROOT with actual absolute paths (expand `~` to real home directory).
+Use the exact values from the Context section above (expand `~` to the real home directory path).
 
-The script creates `.kanban/`, registers the MCP server via `claude mcp add`, and appends `## Kanban Board` to `CLAUDE.md`.
-
-## Step 4: Report to the user
+### Report to the user
 
 Tell the user:
-- Kanban board is set up for PROJECT_ROOT
-- Restart Claude Code (or run `/mcp reload`) to activate the kanban MCP server
+- Kanban board set up for `<Project root>`
+- Restart Claude Code or run `/mcp reload` to activate the kanban MCP server
 - Board URL available via `kanban_status` after restart (default: `http://127.0.0.1:8765/`)
 - Dashboard (multi-project): `http://127.0.0.1:8700/`
