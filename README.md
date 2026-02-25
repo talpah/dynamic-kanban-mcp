@@ -44,7 +44,7 @@ This repo is both the MCP server and a Claude Code plugin marketplace. Add it on
 
 **1. Add the marketplace** (one-time):
 ```
-/plugin add https://github.com/talpah/dynamic-kanban-mcp
+/plugin marketplace add https://github.com/talpah/dynamic-kanban-mcp
 ```
 
 **2. Set up a project:**
