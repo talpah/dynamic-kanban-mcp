@@ -349,12 +349,14 @@ function showEmptyMessage() {
 
 // Render cards
 function renderCards() {
-    // Clear columns (keep headers and drop zones)
+    // Clear columns (keep headers, quick-add row, and drop zones)
     document.querySelectorAll('.column').forEach(column => {
         const header = column.querySelector('.column-header');
+        const quickAdd = column.querySelector('.quick-add-row');
         const dropZone = column.querySelector('.drop-zone');
         column.innerHTML = '';
         column.appendChild(header);
+        if (quickAdd) column.appendChild(quickAdd);
         column.appendChild(dropZone);
     });
 
