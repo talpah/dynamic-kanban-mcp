@@ -4,4 +4,4 @@ description: Remove the kanban MCP server registration and Kanban section from C
 skill: uninstall
 ---
 
-Run the uninstall skill.
+Stops the server, removes the MCP registration via `claude mcp remove`, and strips the Kanban section from `CLAUDE.md`.

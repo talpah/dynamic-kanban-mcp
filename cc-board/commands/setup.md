@@ -4,4 +4,4 @@ description: Set up a kanban board for the current project — registers the MCP
 skill: setup
 ---
 
-Run the setup skill.
+Creates `.kanban/`, registers the MCP server via `claude mcp add --scope local`, and appends a Kanban section to `CLAUDE.md`.

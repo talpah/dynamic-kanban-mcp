@@ -4,4 +4,4 @@ description: Show the kanban board status for the current project — task count
 skill: status
 ---
 
-Run the status skill.
+Calls `kanban_status` MCP tool and shows board overview, task counts, and live URL.

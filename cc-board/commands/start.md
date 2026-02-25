@@ -4,4 +4,4 @@ description: Start (or restart) the kanban MCP server for the current project â€
 skill: start
 ---
 
-Run the start skill.
+Checks registry for a running kanban server and guides the user to restart via `/mcp reload` if needed.
