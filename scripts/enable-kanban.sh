@@ -33,13 +33,15 @@ claude mcp add \
     --scope local \
     -e "KANBAN_DATA_DIR=${DATA_DIR}" \
     -e "KANBAN_WEBSOCKET_HOST=127.0.0.1" \
+    --transport stdio \
     kanban \
-    uv -- run --project "${SERVER_DIR}" python "${SERVER_ENTRY}" 2>/dev/null \
+    -- uv run --project "${SERVER_DIR}" python "${SERVER_ENTRY}" 2>/dev/null \
     || claude mcp add \
         -e "KANBAN_DATA_DIR=${DATA_DIR}" \
         -e "KANBAN_WEBSOCKET_HOST=127.0.0.1" \
+        --transport stdio \
         kanban \
-        uv -- run --project "${SERVER_DIR}" python "${SERVER_ENTRY}"
+        -- uv run --project "${SERVER_DIR}" python "${SERVER_ENTRY}"
 echo "[2/3] Registered kanban MCP server in local scope"
 
 # 3. Append kanban section to CLAUDE.md (idempotent)
