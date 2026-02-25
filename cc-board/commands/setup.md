@@ -9,30 +9,39 @@ disable-model-invocation: true
 ## Context (auto-detected)
 
 - Project root: !`git rev-parse --show-toplevel 2>/dev/null || pwd`
-- Script: !`ls ~/.claude/plugins/marketplaces/dynamic-kanban-mcp/scripts/enable-kanban.sh 2>/dev/null || ls ~/Projects/dynamic-kanban-mcp/scripts/enable-kanban.sh 2>/dev/null || echo NOT_FOUND`
 
 ## Steps
 
-### If Script shows NOT_FOUND
+### Step 1: Locate enable-kanban.sh
 
-Clone the repo first:
+Use the Bash tool to find the script — check in order:
+
+```bash
+test -f ~/.claude/plugins/marketplaces/dynamic-kanban-mcp/scripts/enable-kanban.sh && echo FOUND || echo NOT_FOUND
+```
+
+If NOT_FOUND:
+```bash
+test -f ~/Projects/dynamic-kanban-mcp/scripts/enable-kanban.sh && echo FOUND || echo NOT_FOUND
+```
+
+If NOT_FOUND, clone:
 ```bash
 git clone https://github.com/talpah/dynamic-kanban-mcp ~/.local/share/dynamic-kanban-mcp
 ```
-Then use `~/.local/share/dynamic-kanban-mcp/scripts/enable-kanban.sh` as the script path.
+Then use `~/.local/share/dynamic-kanban-mcp/scripts/enable-kanban.sh`.
 
-### Run the setup script
+### Step 2: Run the setup script
 
 ```bash
-bash <Script> <Project root>
+bash <script-path> <Project root>
 ```
 
-Use the exact values from the Context section above (expand `~` to the real home directory path).
+Use the exact project root from the Context section above (expand `~` to the real home path).
 
-### Report to the user
+### Step 3: Report to the user
 
-Tell the user:
 - Kanban board set up for `<Project root>`
-- Restart Claude Code or run `/mcp reload` to activate the kanban MCP server
+- Restart Claude Code or run `/mcp reload` to activate
 - Board URL available via `kanban_status` after restart (default: `http://127.0.0.1:8765/`)
-- Dashboard (multi-project): `http://127.0.0.1:8700/`
+- Dashboard: `http://127.0.0.1:8700/`
