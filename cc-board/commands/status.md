@@ -23,7 +23,7 @@ After the status output, print this command reference:
 /kanban:analyze [id]       generate implementation plan
 /kanban:validate [id|--all] check dependencies
 /kanban:session start|end  track a work session
-/kanban:init               set project metadata & columns
+/kanban:init               set project metadata and columns
 /kanban:import [file]      bulk import tasks from JSON
 /kanban:setup              re-register MCP server
 ```
