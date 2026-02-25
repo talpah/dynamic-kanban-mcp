@@ -70,6 +70,10 @@ class KanbanController:
 
     def _http_handler(self, connection: ServerConnection, request: Request) -> Response | None:
         """Handle HTTP requests; return None to let WebSocket handshake proceed."""
+        # WebSocket upgrade requests must pass through regardless of path
+        if request.headers.get("upgrade", "").lower() == "websocket":
+            return None
+
         path = request.path.split("?")[0]  # strip query string
 
         if path in ("/", "/index.html"):
