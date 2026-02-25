@@ -7,7 +7,7 @@
 > - **HTTP serving** — board and dashboard served over HTTP on the server port; no `file://` URLs
 > - **Multi-project dashboard** on port 8700 — single view of all active kanban sessions
 > - **Shared registry** (`~/.kanban/registry.json`) — servers discover each other and prune stale entries automatically
-> - **Claude Code plugin** — `/kanban:setup`, `/kanban:status`, `/kanban:start`, `/kanban:stop`, `/kanban:uninstall`
+> - **Claude Code plugin** — `/kanban:setup`, `/kanban:status`, `/kanban:add`, `/kanban:task`, `/kanban:session`, and more
 > - **`uv`-based** — `pyproject.toml` replaces `requirements.txt`; `ruff` + `ty` for lint/typecheck
 > - **Reorganized layout** — `server/` for Python, `ui/` for HTML+JS
 
@@ -63,11 +63,15 @@ This registers the `kanban` MCP server in local scope for the current project an
 
 | Command | Description |
 |---------|-------------|
-| `/kanban:setup` | Register kanban for the current project |
-| `/kanban:status` | Show board overview + open in browser |
-| `/kanban:start` | Check if running; guide to restart if not |
-| `/kanban:stop` | Kill the server for the current project |
-| `/kanban:uninstall` | Remove MCP registration and CLAUDE.md section |
+| `/kanban:setup` | Register kanban MCP for this project (one-time) |
+| `/kanban:status` | Board overview, task counts, board URL, command reference |
+| `/kanban:init [name]` | Set project metadata and customize columns |
+| `/kanban:add [title]` | Add a task interactively |
+| `/kanban:task [id]` | View full task details |
+| `/kanban:analyze [id]` | Generate implementation plan for a task |
+| `/kanban:validate [id\|--all]` | Check task or project dependencies |
+| `/kanban:session start\|end` | Start or end a work session |
+| `/kanban:import [file]` | Bulk import tasks from JSON |
 
 ## Manual setup (without the plugin)
 
