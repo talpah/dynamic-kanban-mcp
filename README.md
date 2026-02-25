@@ -52,7 +52,7 @@ This repo is both the MCP server and a Claude Code plugin marketplace. Add it on
 /kanban:setup
 ```
 
-This registers the `kanban` MCP server in local scope for the current project and adds a `## Kanban Board` section to `CLAUDE.md`. Restart Claude Code (or `/mcp reload`) to activate.
+This registers the `kanban` MCP server in local scope for the current project and adds a `## Kanban Board` section to `CLAUDE.md`. Restart Claude Code to activate.
 
 **3. Use the board:**
 - Call `kanban_status` to get the board URL

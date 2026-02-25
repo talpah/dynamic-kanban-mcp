@@ -42,6 +42,6 @@ Use the exact project root from the Context section above (expand `~` to the rea
 ### Step 3: Report to the user
 
 - Kanban board set up for `<Project root>`
-- Restart Claude Code or run `/mcp reload` to activate
+- **Restart Claude Code** to activate the kanban MCP server
 - Board URL available via `kanban_status` after restart (default: `http://127.0.0.1:8765/`)
 - Dashboard: `http://127.0.0.1:8700/`

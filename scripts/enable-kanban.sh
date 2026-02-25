@@ -105,4 +105,4 @@ else:
 PYEOF
 
 echo ""
-echo "Done. Restart Claude Code (or /mcp reload) to activate the kanban server."
+echo "Done. Restart Claude Code to activate the kanban server."
