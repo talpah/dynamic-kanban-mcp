@@ -1,17 +1,29 @@
 ---
 name: kanban:session
 description: Start or end a work session — tracks time and progress against the board
-argument-hint: "start|end"
+argument-hint: "start [name] | end"
 disable-model-invocation: true
 ---
 
 Manage a work session using `kanban_start_session` or `kanban_end_session`.
 
-Determine the action from `$ARGUMENTS`:
-- If `$ARGUMENTS` is `start` or empty with no active session → call `kanban_start_session`
-- If `$ARGUMENTS` is `end` → call `kanban_end_session`
-- If `$ARGUMENTS` is neither, ask: "Start or end session? [start/end]"
+## Examples
 
-**On start:** call `kanban_start_session`, then show what tasks are `in_progress` or `ready` to work on.
+```
+/kanban:session start auth-refactor
+/kanban:session start "fix payment bugs"
+/kanban:session end
+```
 
-**On end:** call `kanban_end_session`, then show a summary of what moved during the session.
+## Logic
+
+Parse `$ARGUMENTS`:
+
+- Starts with `start` → extract the rest as the session name, then call `kanban_start_session` with `session_name`
+  - If no name provided after `start`, ask: "Session name?"
+- `end` → call `kanban_end_session` (no arguments needed)
+- Empty → ask: "Start or end session? [start/end]"
+
+**On start:** confirm the session name, then show tasks currently `in_progress` or `ready`.
+
+**On end:** confirm the session ended, then show what moved during the session.

@@ -73,6 +73,29 @@ This registers the `kanban` MCP server in local scope for the current project an
 | `/kanban:session start\|end` | Start or end a work session |
 | `/kanban:import [file]` | Bulk import tasks from JSON |
 
+## Typical session workflow
+
+```
+# Start of day
+/kanban:status                        → board overview + task counts
+/kanban:session start auth-refactor   → open a named session
+
+# Working
+/kanban:task FEAT-12                  → view full task details
+/kanban:analyze FEAT-12               → generate implementation plan
+/kanban:validate FEAT-12              → check dependencies are met
+
+# End of day
+/kanban:session end                   → close session, summary of progress
+```
+
+Adding tasks:
+```
+/kanban:add                           → interactive: asks title, priority, effort
+/kanban:add fix login redirect        → pre-fills title, asks the rest
+/kanban:import tasks.json             → bulk import from JSON
+```
+
 ## Manual setup (without the plugin)
 
 ```bash
