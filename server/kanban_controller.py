@@ -1174,10 +1174,7 @@ class KanbanController:
         return f"✅ Task '{task_data['title']}' added successfully"
 
     def update_manual_task(self, task_id: str, updated_data: dict) -> str:
-        """Update task modified manually by user"""
-        if not self.is_manual_mode:
-            return "Cannot update manual task - not in manual mode"
-
+        """Update task modified manually by user (always allowed regardless of mode)"""
         # Find and update feature
         feature = next((f for f in self.features if f["id"] == task_id), None)
         if not feature:
@@ -1212,10 +1209,7 @@ class KanbanController:
         return f"✅ Task '{feature['title']}' updated successfully"
 
     def delete_manual_task(self, task_id: str) -> str:
-        """Delete task manually by user"""
-        if not self.is_manual_mode:
-            return "Cannot delete manual task - not in manual mode"
-
+        """Delete task manually by user (always allowed regardless of mode)"""
         # Find and remove feature
         feature = next((f for f in self.features if f["id"] == task_id), None)
         if not feature:
