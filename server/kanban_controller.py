@@ -69,12 +69,11 @@ class KanbanController:
         return response
 
     def _http_handler(self, connection: ServerConnection, request: Request) -> Response | None:
-        """Handle HTTP requests; return None to let WebSocket handshake proceed."""
-        # WebSocket upgrade requests must pass through regardless of path
+        """Handle HTTP requests for the project board server."""
         if request.headers.get("upgrade", "").lower() == "websocket":
             return None
 
-        path = request.path.split("?")[0]  # strip query string
+        path = request.path.split("?")[0]
 
         if path in ("/", "/index.html"):
             return self._make_response(
@@ -94,7 +93,24 @@ class KanbanController:
         if path == "/api/registry":
             body = json.dumps(registry.get_active_servers())
             return self._make_response(connection, HTTPStatus.OK, body, "application/json")
-        # Let WebSocket handshake proceed
+        return None
+
+    def _dashboard_http_handler(
+        self, connection: ServerConnection, request: Request
+    ) -> Response | None:
+        """Handle HTTP requests for the shared dashboard server (port 8700)."""
+        if request.headers.get("upgrade", "").lower() == "websocket":
+            return None
+
+        path = request.path.split("?")[0]
+
+        if path in ("/", "/index.html"):
+            return self._make_response(
+                connection, HTTPStatus.OK, self._dashboard_html, "text/html; charset=utf-8"
+            )
+        if path == "/api/registry":
+            body = json.dumps(registry.get_active_servers())
+            return self._make_response(connection, HTTPStatus.OK, body, "application/json")
         return None
 
     def _get_status_summary(self) -> dict[str, Any]:
@@ -1365,7 +1381,7 @@ class KanbanController:
                 self._handle_websocket_connection,
                 CONFIG.WEBSOCKET_HOST,
                 CONFIG.DASHBOARD_PORT,
-                process_request=self._http_handler,
+                process_request=self._dashboard_http_handler,
             )
             self.logger.info(f"Dashboard server claimed port {CONFIG.DASHBOARD_PORT}")
         except OSError:
