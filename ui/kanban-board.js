@@ -414,16 +414,12 @@ function createCard(feature) {
     // Add drag event listeners
     setupDragEvents(card, feature);
     
-    // In manual mode, click to edit; in autonomous mode, click for details
-    if (state.isManualMode) {
-        card.addEventListener('click', (e) => {
-            if (!e.target.classList.contains('card-action-btn') && !e.target.classList.contains('card-checkbox')) {
-                editTask(feature.id);
-            }
-        });
-    } else {
-        card.addEventListener('click', () => showCardDetails(feature));
-    }
+    // Click anywhere on card (outside action buttons) opens edit form
+    card.addEventListener('click', (e) => {
+        if (!e.target.classList.contains('card-action-btn') && !e.target.classList.contains('card-checkbox')) {
+            editTask(feature.id);
+        }
+    });
     
     return card;
 }
