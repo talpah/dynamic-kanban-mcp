@@ -589,6 +589,7 @@ class KanbanController:
         self.features = self._load_features()
 
         progress = self.load_progress()
+        project_name, project_root = self._get_project_info()
         return {
             "features": self.features,
             "boardState": progress["boardState"],
@@ -596,6 +597,8 @@ class KanbanController:
             "metadata": progress["metadata"],
             "isManualMode": self.is_manual_mode,
             "pendingActions": len(self.pending_claude_actions),
+            "project_name": project_name,
+            "project_root": project_root,
         }
 
     def refresh_and_notify_clients(self):

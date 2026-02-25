@@ -32,6 +32,8 @@
   .dot.grey { background: #4a5568; }
   .card-title { font-weight: 600; font-size: 1rem; color: #f1f5f9; }
   .card-port { font-size: 0.75rem; color: #64748b; margin-left: auto; }
+  .card-path { font-size: 0.72rem; color: #4a5568; margin-bottom: 8px;
+               white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   .counts { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
   .badge { font-size: 0.72rem; padding: 2px 8px; border-radius: 9999px;
@@ -116,6 +118,7 @@ function renderCard(key) {
       <span class="card-title">${esc(entry.project_name)}</span>
       <span class="card-port">:${entry.port}</span>
     </div>
+    <div class="card-path">${esc(entry.project_root)}</div>
     <div class="counts">${formatCounts(counts)}</div>
     ${doing.length > 0 ? `<div class="doing-list">${doing.slice(0, 3).map(t => `<div class="doing-item">${esc(t)}</div>`).join('')}</div>` : ''}
     ${activity ? `<div class="last-activity">↻ ${esc(activity)}</div>` : ''}

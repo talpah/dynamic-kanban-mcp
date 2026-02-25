@@ -26,7 +26,7 @@ echo ""
 
 # 1. Create project data directory
 mkdir -p "${DATA_DIR}"
-echo "[1/3] Created ${DATA_DIR}"
+echo "[1/4] Created ${DATA_DIR}"
 
 # 2. Register in local scope (idempotent: skip if already registered)
 if claude mcp list 2>/dev/null | grep -q "^kanban"; then
@@ -66,6 +66,8 @@ Key tools:
 - \`kanban_get_next_task\` — next highest-priority ready task
 - \`kanban_start_session\` / \`kanban_end_session\` — track work sessions
 
+Task sequencing: move **one** task to \`progress\` at a time. Only advance the next \`ready\` task after the current one is \`done\`.
+
 Board data: \`.kanban/kanban-progress.json\`
 Board UI: run \`kanban_status\` after session start to get the HTTP URL.
 EOF
@@ -74,7 +76,7 @@ else
     echo "[3/4] CLAUDE.md already has kanban section, skipped"
 fi
 
-# 4. Add SessionStart hook (stdout is injected as Claude context on session start)
+# 4. Add kanban skill permissions to .claude/settings.local.json
 mkdir -p "${PROJECT_ROOT}/.claude"
 PROJECT_ROOT="${PROJECT_ROOT}" python3 << 'PYEOF'
 import json
@@ -82,7 +84,17 @@ import os
 from pathlib import Path
 
 settings_file = Path(os.environ["PROJECT_ROOT"]) / ".claude" / "settings.local.json"
-hook_cmd = "[ -d .kanban ] && echo 'KANBAN: Call kanban_status now to show the board state and live URL.' || true"
+kanban_skills = [
+    "Skill(kanban:setup)",
+    "Skill(kanban:status)",
+    "Skill(kanban:init)",
+    "Skill(kanban:add)",
+    "Skill(kanban:import)",
+    "Skill(kanban:session)",
+    "Skill(kanban:analyze)",
+    "Skill(kanban:task)",
+    "Skill(kanban:validate)",
+]
 
 settings: dict = {}
 if settings_file.exists():
@@ -91,17 +103,16 @@ if settings_file.exists():
     except json.JSONDecodeError:
         settings = {}
 
-session_hooks: list = settings.setdefault("hooks", {}).setdefault("SessionStart", [])
-already_exists = any(
-    any(h.get("command") == hook_cmd for h in entry.get("hooks", []))
-    for entry in session_hooks
-)
-if not already_exists:
-    session_hooks.append({"hooks": [{"type": "command", "command": hook_cmd}]})
-    settings_file.write_text(json.dumps(settings, indent=2) + "\n")
-    print("[4/4] Added SessionStart hook to .claude/settings.local.json")
+# Kanban skill permissions (allow autonomous invocation without user prompt)
+allow_list: list = settings.setdefault("permissions", {}).setdefault("allow", [])
+added = [s for s in kanban_skills if s not in allow_list]
+allow_list.extend(added)
+if added:
+    print(f"[4/4] Added {len(added)} kanban skill permission(s) to settings.local.json")
 else:
-    print("[4/4] SessionStart hook already exists, skipped")
+    print("[4/4] Kanban skill permissions already present, skipped")
+
+settings_file.write_text(json.dumps(settings, indent=2) + "\n")
 PYEOF
 
 echo ""

@@ -12,9 +12,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 |---------|-------------|
 | `/kanban:setup` | Register kanban MCP for this project + update CLAUDE.md |
 | `/kanban:status` | Show board overview, task counts, and live board URL |
-| `/kanban:start` | Check if running; guide user to restart if not |
-| `/kanban:stop` | Kill the running kanban server for this project |
-| `/kanban:uninstall` | Remove MCP registration and CLAUDE.md section |
+| `/kanban:init` | Initialize board with project tasks |
+| `/kanban:add` | Add a single task to the board |
+| `/kanban:import` | Import tasks from JSON |
+| `/kanban:session` | Start or end a work session |
+| `/kanban:analyze` | Analyze board state and priorities |
+| `/kanban:task` | Get details or work on a specific task |
+| `/kanban:validate` | Validate board consistency |
 
 ## Architecture
 
@@ -24,18 +28,16 @@ dynamic-kanban-mcp/                    ← single repo: server + plugin marketpl
 │   └── marketplace.json               ← marketplace manifest (points to ./cc-board)
 ├── cc-board/                          ← this plugin (plugin name: "kanban")
 │   ├── .claude-plugin/plugin.json     ← plugin manifest
-│   ├── commands/                      ← one .md per slash command
+│   ├── commands/                      ← one .md per slash command (no skills/ dir)
 │   │   ├── setup.md
 │   │   ├── status.md
-│   │   ├── start.md
-│   │   ├── stop.md
-│   │   └── uninstall.md
-│   ├── skills/                        ← one SKILL.md per command
-│   │   ├── setup/SKILL.md
-│   │   ├── status/SKILL.md
-│   │   ├── start/SKILL.md
-│   │   ├── stop/SKILL.md
-│   │   └── uninstall/SKILL.md
+│   │   ├── init.md
+│   │   ├── add.md
+│   │   ├── import.md
+│   │   ├── session.md
+│   │   ├── analyze.md
+│   │   ├── task.md
+│   │   └── validate.md
 │   └── CLAUDE.md                      ← this file
 ├── scripts/
 │   └── enable-kanban.sh               ← shell script that does the actual setup
@@ -56,22 +58,30 @@ Per-project data lands in `<project>/.kanban/kanban-progress.json`.
 
 ## How it works
 
-`/kanban:setup` (see `skills/setup/SKILL.md`):
+`/kanban:setup`:
 1. Detects git root as the project root
 2. Locates `scripts/enable-kanban.sh`
-3. Runs the script — creates `.kanban/`, registers MCP in local scope, updates CLAUDE.md
+3. Runs the script — creates `.kanban/`, registers MCP in local scope, updates CLAUDE.md, adds skill permissions
 
 The server (`server/mcp-kanban-server.py`) starts as a Claude Code MCP subprocess. It serves:
 - `http://127.0.0.1:<port>/` — board HTML (WebSocket on the same port)
 - `http://127.0.0.1:8700/` — multi-project dashboard (first server claims this port)
 - `http://127.0.0.1:<port>/api/registry` — list of all active servers
 
+## Task sequencing rules
+
+When the user asks to "do all tasks" or work through multiple tasks:
+- Move **one** task to `progress`; keep the rest in `ready`
+- Implement the task, then move it to `done`
+- Only then advance the next `ready` task to `progress`
+- Never put multiple tasks in `progress` simultaneously unless explicitly asked to work in parallel
+
 ## Development
 
 When modifying the plugin:
-- `SKILL.md` changes take effect immediately (no reinstall needed)
-- `plugin.json` or `commands/` changes require plugin reinstall: run `/plugin` in CC
-- `marketplace.json` changes require re-adding the marketplace
+- `commands/*.md` changes require plugin reinstall: run `/plugin` in CC
+- `plugin.json` changes require plugin reinstall
+- No `skills/` directory — instructions live directly in `commands/*.md`
 
 When modifying the server (files in the repo root):
 - Changes take effect on the next Claude Code session restart (server is a subprocess)

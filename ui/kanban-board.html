@@ -756,6 +756,52 @@
             transform: scale(1.1);
         }
 
+        /* Quick-add button in backlog column header */
+        .column-quick-add-btn {
+            position: absolute;
+            top: 5px;
+            right: 28px;
+            background: none;
+            color: #64748b;
+            border: none;
+            font-size: 16px;
+            line-height: 1;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s, color 0.2s;
+            padding: 0 2px;
+        }
+        .column-header:hover .column-quick-add-btn { opacity: 1; }
+        .column-quick-add-btn:hover { color: #a78bfa; }
+
+        /* Inline quick-add input row */
+        .quick-add-row {
+            display: none;
+            padding: 6px 8px;
+        }
+        .quick-add-row.open { display: flex; gap: 6px; }
+        .quick-add-input {
+            flex: 1;
+            background: #1e293b;
+            border: 1px solid #4c5568;
+            border-radius: 6px;
+            color: #e2e8f0;
+            font-size: 0.8rem;
+            padding: 5px 8px;
+            outline: none;
+        }
+        .quick-add-input:focus { border-color: #a78bfa; }
+        .quick-add-submit {
+            background: #4c1d95;
+            color: #e2e8f0;
+            border: none;
+            border-radius: 6px;
+            padding: 5px 10px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+        .quick-add-submit:hover { background: #6d28d9; }
+
         /* Confirmation Modal Styles */
         .confirmation-modal {
             display: none;

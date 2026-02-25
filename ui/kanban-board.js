@@ -214,14 +214,12 @@ function updateBoardFromServer(data) {
     state.features = data.features || [];
     state.boardState = data.boardState || {};
     
-    // Update project title if available
-    if (data.metadata && data.metadata.projectName) {
-        state.projectTitle = data.metadata.projectName;
-        document.querySelector('.header h1').textContent = `🚀 ${state.projectTitle} Kanban`;
-    } else if (state.features.length === 0) {
-        // Reset title when no features
-        state.projectTitle = "Dynamic Project";
-        document.querySelector('.header h1').textContent = `🚀 ${state.projectTitle} Kanban`;
+    // Update project title: prefer metadata.projectName, fall back to project_name from env
+    const name = (data.metadata && data.metadata.projectName) || data.project_name || "Kanban";
+    if (name !== state.projectTitle) {
+        state.projectTitle = name;
+        document.querySelector('.header h1').textContent = `🚀 ${name}`;
+        document.title = `${name} — Kanban`;
     }
     
     // Always re-render the board completely
@@ -311,12 +309,19 @@ function createColumns() {
         const columnElement = document.createElement('div');
         columnElement.className = 'column';
         columnElement.dataset.status = column.id;
+        const isBacklog = column.id === 'backlog';
         columnElement.innerHTML = `
             <div class="column-header">
                 ${column.name}
                 <span class="column-count">0</span>
+                ${isBacklog ? `<button class="column-quick-add-btn" onclick="toggleQuickAdd()" title="Quick add">+</button>` : ''}
                 <button class="column-clear-btn" onclick="showClearColumnModal('${column.id}')" title="Clear ${column.name}">×</button>
             </div>
+            ${isBacklog ? `<div class="quick-add-row" id="quick-add-row">
+                <input class="quick-add-input" id="quick-add-input" type="text" placeholder="Task title…" maxlength="120"
+                       onkeydown="handleQuickAddKey(event)">
+                <button class="quick-add-submit" onclick="submitQuickAdd()">Add</button>
+            </div>` : ''}
             <div class="drop-zone" data-status="${column.id}">
                 Drop cards here
             </div>
@@ -661,6 +666,48 @@ function toggleMode() {
 }
 
 // Manual Mode - Task Management
+function toggleQuickAdd() {
+    const row = document.getElementById('quick-add-row');
+    const input = document.getElementById('quick-add-input');
+    if (!row) return;
+    const open = row.classList.toggle('open');
+    if (open) { input.focus(); } else { input.value = ''; }
+}
+
+function handleQuickAddKey(event) {
+    if (event.key === 'Enter') { event.preventDefault(); submitQuickAdd(); }
+    if (event.key === 'Escape') { toggleQuickAdd(); }
+}
+
+function submitQuickAdd() {
+    const input = document.getElementById('quick-add-input');
+    const title = input ? input.value.trim() : '';
+    if (!title) return;
+    const taskData = {
+        id: `task-${crypto.randomUUID().substring(0, 8)}`,
+        title,
+        description: '',
+        priority: 'medium',
+        effort: 'm',
+        epic: 'general',
+        stage: 1,
+        status: 'backlog',
+        dependencies: [],
+        acceptance: 'Task completed successfully'
+    };
+    state.features.push(taskData);
+    state.boardState[taskData.id] = 'backlog';
+    if (state.connected) {
+        sendWebSocketMessage(state.isManualMode
+            ? { type: 'manual_task_added', task: taskData }
+            : { type: 'add_to_backlog', task: taskData });
+    }
+    createColumns();
+    renderCards();
+    input.value = '';
+    input.focus();
+}
+
 function openAddTaskModal() {
     document.getElementById('addTaskModal').style.display = 'block';
     document.getElementById('taskTitle').focus();
