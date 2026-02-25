@@ -1,6 +1,6 @@
 # dynamic-kanban-mcp
 
-> **Fork of [GongRzhe/MCSB-kanban](https://github.com/GongRzhe/MCSB-kanban)** (originally "mcp-kanban-server")
+> **Fork of [renatokuipers/dynamic-kanban-mcp](https://github.com/renatokuipers/dynamic-kanban-mcp)**
 >
 > Key differences from upstream:
 > - **Per-project isolation** via `KANBAN_DATA_DIR` — multiple projects run concurrently without stepping on each other
