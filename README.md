@@ -1,5 +1,16 @@
 # dynamic-kanban-mcp
 
+> **Fork of [GongRzhe/MCSB-kanban](https://github.com/GongRzhe/MCSB-kanban)** (originally "mcp-kanban-server")
+>
+> Key differences from upstream:
+> - **Per-project isolation** via `KANBAN_DATA_DIR` — multiple projects run concurrently without stepping on each other
+> - **HTTP serving** — board and dashboard served over HTTP on the server port; no `file://` URLs
+> - **Multi-project dashboard** on port 8700 — single view of all active kanban sessions
+> - **Shared registry** (`~/.kanban/registry.json`) — servers discover each other and prune stale entries automatically
+> - **Claude Code plugin** — `/kanban:setup`, `/kanban:status`, `/kanban:start`, `/kanban:stop`, `/kanban:uninstall`
+> - **`uv`-based** — `pyproject.toml` replaces `requirements.txt`; `ruff` + `ty` for lint/typecheck
+> - **Reorganized layout** — `server/` for Python, `ui/` for HTML+JS
+
 A Model Context Protocol (MCP) server that gives Claude Code a real-time kanban board for any project, with a browser UI served over HTTP and a multi-project dashboard.
 
 ![Screenshot from 2025-06-23 15-16-00](https://github.com/user-attachments/assets/02e030bc-7b31-4242-8429-69ed5785d6ff)
@@ -70,7 +81,7 @@ Or with `uv` directly:
 KANBAN_DATA_DIR=/your-project/.kanban \
 KANBAN_WEBSOCKET_HOST=127.0.0.1 \
 uv run --project /path/to/dynamic-kanban-mcp \
-  python /path/to/dynamic-kanban-mcp/mcp-kanban-server.py
+  python /path/to/dynamic-kanban-mcp/server/mcp-kanban-server.py
 ```
 
 ## MCP tools
@@ -100,16 +111,19 @@ uv run --project /path/to/dynamic-kanban-mcp \
 ## Architecture
 
 ```
-mcp-kanban-server.py     ← MCP stdio entry point; spawned by Claude Code
-kanban_controller.py     ← board logic, HTTP handler, WebSocket broadcast
-registry.py              ← shared ~/.kanban/registry.json (fcntl-locked)
-config.py                ← configuration; KANBAN_DATA_DIR for per-project isolation
-mcp_protocol.py          ← JSON-RPC 2.0 over stdio
-models.py                ← Pydantic data models
-kanban-board.html        ← board UI (served over HTTP, connects WS to same port)
-kanban-board.js          ← board JavaScript
-dashboard.html           ← multi-project dashboard (served on port 8700)
-scripts/enable-kanban.sh ← shell script used by /kanban:setup
+server/
+  mcp-kanban-server.py   ← MCP stdio entry point; spawned by Claude Code
+  kanban_controller.py   ← board logic, HTTP handler, WebSocket broadcast
+  registry.py            ← shared ~/.kanban/registry.json (fcntl-locked)
+  config.py              ← configuration; KANBAN_DATA_DIR for per-project isolation
+  mcp_protocol.py        ← JSON-RPC 2.0 over stdio
+  models.py              ← Pydantic data models
+ui/
+  kanban-board.html      ← board UI (served over HTTP, connects WS to same port)
+  kanban-board.js        ← board JavaScript
+  dashboard.html         ← multi-project dashboard (served on port 8700)
+scripts/
+  enable-kanban.sh       ← shell script used by /kanban:setup
 cc-board/                ← Claude Code plugin (name: "kanban")
 ```
 
@@ -151,7 +165,7 @@ uv run nox
 
 # Run server manually for testing
 KANBAN_DATA_DIR=/tmp/test-kanban KANBAN_WEBSOCKET_HOST=127.0.0.1 \
-  uv run python mcp-kanban-server.py
+  uv run python server/mcp-kanban-server.py
 ```
 
 Requires Python 3.11+, `uv`, `websockets>=16.0`, `pydantic>=2.0`.

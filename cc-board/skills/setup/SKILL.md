@@ -65,7 +65,7 @@ The script handles all setup steps: creates `.kanban/`, registers the MCP server
 Read the output from the script and extract SERVER_DIR (printed as "Server: ..."). Tell the user:
 
 - **Project:** PROJECT_NAME (PROJECT_ROOT)
-- **Server:** SERVER_DIR/mcp-kanban-server.py
+- **Server:** SERVER_DIR/server/mcp-kanban-server.py
 - **Board data:** PROJECT_ROOT/.kanban/
 - **Board URL:** available via `kanban_status` after session restart (default: `http://127.0.0.1:8765/`)
 - **Dashboard:** `http://127.0.0.1:8700/` (multi-project view, first server claims this port)

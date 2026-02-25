@@ -39,14 +39,17 @@ dynamic-kanban-mcp/                    ← single repo: server + plugin marketpl
 │   └── CLAUDE.md                      ← this file
 ├── scripts/
 │   └── enable-kanban.sh               ← shell script that does the actual setup
-├── mcp-kanban-server.py               ← MCP stdio server entry point
-├── kanban_controller.py               ← board logic, HTTP + WebSocket server
-├── registry.py                        ← shared ~/.kanban/registry.json management
-├── config.py                          ← supports KANBAN_DATA_DIR env var
-├── mcp_protocol.py                    ← JSON-RPC 2.0 over stdio
-├── models.py                          ← Pydantic data models
-├── kanban-board.html                  ← board UI (served over HTTP on :8765)
-└── dashboard.html                     ← multi-project dashboard (served on :8700)
+├── server/
+│   ├── mcp-kanban-server.py           ← MCP stdio server entry point
+│   ├── kanban_controller.py           ← board logic, HTTP + WebSocket server
+│   ├── registry.py                    ← shared ~/.kanban/registry.json management
+│   ├── config.py                      ← supports KANBAN_DATA_DIR env var
+│   ├── mcp_protocol.py                ← JSON-RPC 2.0 over stdio
+│   └── models.py                      ← Pydantic data models
+└── ui/
+    ├── kanban-board.html              ← board UI (served over HTTP on :8765)
+    ├── kanban-board.js                ← board JavaScript
+    └── dashboard.html                 ← multi-project dashboard (served on :8700)
 ```
 
 Per-project data lands in `<project>/.kanban/kanban-progress.json`.
@@ -58,7 +61,7 @@ Per-project data lands in `<project>/.kanban/kanban-progress.json`.
 2. Locates `scripts/enable-kanban.sh`
 3. Runs the script — creates `.kanban/`, registers MCP in local scope, updates CLAUDE.md
 
-The server (`mcp-kanban-server.py`) starts as a Claude Code MCP subprocess. It serves:
+The server (`server/mcp-kanban-server.py`) starts as a Claude Code MCP subprocess. It serves:
 - `http://127.0.0.1:<port>/` — board HTML (WebSocket on the same port)
 - `http://127.0.0.1:8700/` — multi-project dashboard (first server claims this port)
 - `http://127.0.0.1:<port>/api/registry` — list of all active servers

@@ -24,7 +24,7 @@ def format_(session: nox.Session) -> None:
 def typecheck(session: nox.Session) -> None:
     """Run ty type checker."""
     session.install("ty>=0.0.1a0", "pydantic>=2.12", "websockets>=16.0")
-    session.run("ty", "check", "--exclude", "noxfile.py", ".")
+    session.run("ty", "check", "server/")
 
 
 @nox.session

@@ -16,9 +16,6 @@ dev = [
     "ty>=0.0.1a0",
 ]
 
-[project.scripts]
-kanban-mcp = "mcp_kanban_server:main"
-
 [tool.ruff]
 line-length = 100
 target-version = "py312"

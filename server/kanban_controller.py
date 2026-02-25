@@ -17,13 +17,12 @@ from http import HTTPStatus
 from pathlib import Path
 from typing import Any
 
-import websockets
-from websockets.asyncio.server import ServerConnection
-from websockets.http11 import Request, Response
-
 import registry
+import websockets
 from config import CONFIG
 from models import DependencyValidation
+from websockets.asyncio.server import ServerConnection
+from websockets.http11 import Request, Response
 
 
 class KanbanController:
@@ -52,8 +51,8 @@ class KanbanController:
         self._dashboard_html = self._read_static("dashboard.html")
 
     def _read_static(self, filename: str) -> str:
-        """Read a static file from the server directory into a string."""
-        path = Path(__file__).parent / filename
+        """Read a static file from the ui/ directory into a string."""
+        path = Path(__file__).parent.parent / "ui" / filename
         try:
             return path.read_text(encoding="utf-8")
         except FileNotFoundError:

@@ -35,11 +35,12 @@ class KanbanConfig:
             return str(Path(data_dir) / "features.json")
         return str(Path(__file__).parent / "features.json")
 
+    # UI files live in ui/ sibling directory
+    _UI_DIR = Path(__file__).parent.parent / "ui"
+
     @classmethod
     def get_ui_file_path_static(cls):
-        from pathlib import Path
-
-        return str(Path(__file__).parent / "kanban-board.html")
+        return str(cls._UI_DIR / "kanban-board.html")
 
     DEFAULT_PROGRESS_FILE = "./kanban-progress.json"  # Fallback for backward compatibility
     DEFAULT_UI_FILE = "kanban-board.html"
@@ -147,9 +148,8 @@ class KanbanConfig:
     def validate_task_data(cls, task_data: dict[str, Any]) -> list[str]:
         """Validate task data using Pydantic model and return list of errors"""
         try:
-            from pydantic import ValidationError
-
             from models import Task
+            from pydantic import ValidationError
 
             # Try to create a Task instance with the data
             Task.model_validate(task_data)
@@ -287,24 +287,8 @@ class KanbanConfig:
     @classmethod
     def get_ui_file_path(cls) -> str:
         """Get the path to the UI file"""
-        from pathlib import Path
-
-        # Check current directory first
-        current_dir = Path.cwd()
-        ui_file = current_dir / cls.DEFAULT_UI_FILE
-
-        if ui_file.exists():
-            return str(ui_file)
-
-        # Check script directory
-        script_dir = Path(__file__).parent
-        ui_file = script_dir / cls.DEFAULT_UI_FILE
-
-        if ui_file.exists():
-            return str(ui_file)
-
-        # Return default path even if doesn't exist
-        return str(script_dir / cls.DEFAULT_UI_FILE)
+        ui_file = cls._UI_DIR / cls.DEFAULT_UI_FILE
+        return str(ui_file)
 
     @classmethod
     def validate_ui_file_exists(cls) -> bool:
