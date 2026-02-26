@@ -68,7 +68,7 @@ Key tools:
 
 Task sequencing: move **one** task to \`progress\` at a time. Only advance the next \`ready\` task after the current one is \`done\`.
 
-**New work:** before starting any non-trivial task the user requests, check if it already exists on the board. If not, call \`add_feature\` to create it, then move it to \`progress\` before beginning.
+**New work:** A \`UserPromptSubmit\` hook fires on every message. When no task is in progress it will remind you to classify the request — non-trivial work (bug fix, feature, multi-step change) should be tracked with \`/kanban:start <title>\` before you begin; trivial single-step operations proceed without a task.
 
 Board data: \`.kanban/kanban-progress.json\`
 Board UI: run \`kanban_status\` after session start to get the HTTP URL.
@@ -78,7 +78,23 @@ else
     echo "[3/4] CLAUDE.md already has kanban section, skipped"
 fi
 
-# 4. Add kanban skill permissions to .claude/settings.local.json
+# 4. Install UserPromptSubmit hook
+HOOK_DIR="${PROJECT_ROOT}/.claude/hooks/UserPromptSubmit"
+HOOK_SRC="${SERVER_DIR}/scripts/kanban-hook.sh"
+HOOK_DST="${HOOK_DIR}/kanban-hook.sh"
+mkdir -p "${HOOK_DIR}"
+if [[ ! -f "${HOOK_DST}" ]]; then
+    cp "${HOOK_SRC}" "${HOOK_DST}"
+    chmod +x "${HOOK_DST}"
+    echo "[4/5] Installed kanban-hook.sh → ${HOOK_DST}"
+else
+    # Always update to pick up latest version
+    cp "${HOOK_SRC}" "${HOOK_DST}"
+    chmod +x "${HOOK_DST}"
+    echo "[4/5] Updated kanban-hook.sh in ${HOOK_DIR}"
+fi
+
+# 5. Add kanban skill permissions to .claude/settings.local.json
 mkdir -p "${PROJECT_ROOT}/.claude"
 PROJECT_ROOT="${PROJECT_ROOT}" python3 << 'PYEOF'
 import json
@@ -96,6 +112,8 @@ kanban_skills = [
     "Skill(kanban:analyze)",
     "Skill(kanban:task)",
     "Skill(kanban:validate)",
+    "Skill(kanban:prepare)",
+    "Skill(kanban:start)",
 ]
 
 settings: dict = {}
@@ -110,9 +128,9 @@ allow_list: list = settings.setdefault("permissions", {}).setdefault("allow", []
 added = [s for s in kanban_skills if s not in allow_list]
 allow_list.extend(added)
 if added:
-    print(f"[4/4] Added {len(added)} kanban skill permission(s) to settings.local.json")
+    print(f"[5/5] Added {len(added)} kanban skill permission(s) to settings.local.json")
 else:
-    print("[4/4] Kanban skill permissions already present, skipped")
+    print("[5/5] Kanban skill permissions already present, skipped")
 
 settings_file.write_text(json.dumps(settings, indent=2) + "\n")
 PYEOF

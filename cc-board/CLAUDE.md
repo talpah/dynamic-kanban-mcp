@@ -78,7 +78,12 @@ When the user asks to "do all tasks" or work through multiple tasks:
 - Only then advance the next `ready` task to `progress`
 - Never put multiple tasks in `progress` simultaneously unless explicitly asked to work in parallel
 
-Before starting any non-trivial task the user requests, check if it already exists on the board. If not, call `add_feature` to create it, then move it to `progress` before beginning.
+**A `UserPromptSubmit` hook fires automatically on every message.** When no task is in progress, it injects a reminder asking you to classify the request:
+
+- **Non-trivial** (bug fix, feature, refactor, 2+ steps, touches multiple files) → call `/kanban:start <title>` before writing any code. This creates the task (if new) or moves it to `progress`.
+- **Trivial** (single command, status check, cache clear, one-liner, answering a question) → proceed without creating a task.
+
+Do not skip this classification. When in doubt, lean toward creating a task.
 
 ## Development
 
