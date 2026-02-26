@@ -784,10 +784,100 @@ function handleAddTask(event) {
     console.log('Added new task:', taskData);
 }
 
+// ── Dependency picker ────────────────────────────────────────────────────────
+let _depsSelected = [];   // array of task IDs currently selected
+let _depsEditingId = null; // ID of task being edited (excluded from options)
+
+function _depsSync() {
+    document.getElementById('editTaskDependencies').value = _depsSelected.join(',');
+}
+
+function _depsRenderTags() {
+    const container = document.getElementById('editDepsTags');
+    container.innerHTML = '';
+    _depsSelected.forEach(id => {
+        const task = state.features.find(f => f.id === id);
+        const label = task ? task.title : id;
+        const chip = document.createElement('span');
+        chip.className = 'dep-chip';
+        chip.innerHTML = `<span class="dep-chip-label" title="${label}">${label}</span>
+            <button type="button" class="dep-chip-remove" data-id="${id}" title="Remove">×</button>`;
+        chip.querySelector('.dep-chip-remove').addEventListener('click', (e) => {
+            e.stopPropagation();
+            _depsRemove(id);
+        });
+        container.appendChild(chip);
+    });
+}
+
+function _depsRemove(id) {
+    _depsSelected = _depsSelected.filter(x => x !== id);
+    _depsRenderTags();
+    _depsSync();
+}
+
+function _depsSelect(id) {
+    if (!_depsSelected.includes(id)) {
+        _depsSelected.push(id);
+        _depsRenderTags();
+        _depsSync();
+    }
+    document.getElementById('editDepsSearch').value = '';
+    _depsFilterDropdown('');
+}
+
+function _depsFilterDropdown(query) {
+    const dropdown = document.getElementById('editDepsDropdown');
+    const q = query.trim().toLowerCase();
+    const options = state.features.filter(f =>
+        f.id !== _depsEditingId &&
+        !_depsSelected.includes(f.id) &&
+        (q === '' || f.title.toLowerCase().includes(q) || f.id.toLowerCase().includes(q))
+    );
+
+    dropdown.innerHTML = '';
+    if (options.length === 0) {
+        const li = document.createElement('li');
+        li.className = 'no-results';
+        li.textContent = q ? 'No matching tasks' : 'No other tasks available';
+        dropdown.appendChild(li);
+    } else {
+        options.slice(0, 10).forEach(f => {
+            const li = document.createElement('li');
+            li.innerHTML = `<span>${f.title}</span><span class="dep-opt-id">${f.id}</span>`;
+            li.addEventListener('mousedown', (e) => {
+                e.preventDefault(); // prevent blur before click
+                _depsSelect(f.id);
+            });
+            dropdown.appendChild(li);
+        });
+    }
+    dropdown.classList.remove('hidden');
+}
+
+function _depsInit(selectedIds, editingTaskId) {
+    _depsSelected = [...(selectedIds || [])];
+    _depsEditingId = editingTaskId;
+    _depsRenderTags();
+    _depsSync();
+
+    const search = document.getElementById('editDepsSearch');
+    const dropdown = document.getElementById('editDepsDropdown');
+
+    search.oninput = () => _depsFilterDropdown(search.value);
+    search.onfocus = () => _depsFilterDropdown(search.value);
+    search.onblur = () => setTimeout(() => dropdown.classList.add('hidden'), 150);
+    search.onkeydown = (e) => {
+        if (e.key === 'Escape') { dropdown.classList.add('hidden'); search.blur(); }
+    };
+    dropdown.classList.add('hidden');
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 function editTask(taskId) {
     const feature = state.features.find(f => f.id === taskId);
     if (!feature) return;
-    
+
     // Populate edit form
     document.getElementById('editTaskId').value = feature.id;
     document.getElementById('editTaskTitle').value = feature.title;
@@ -795,8 +885,8 @@ function editTask(taskId) {
     document.getElementById('editTaskPriority').value = feature.priority;
     document.getElementById('editTaskAcceptance').value = feature.acceptance || '';
     document.getElementById('editTaskPlan').value = feature.plan || '';
-    document.getElementById('editTaskDependencies').value = feature.dependencies.join(', ');
-    
+    _depsInit(feature.dependencies || [], feature.id);
+
     // Show modal
     document.getElementById('editTaskModal').style.display = 'block';
 }
@@ -804,6 +894,10 @@ function editTask(taskId) {
 function closeEditTaskModal() {
     document.getElementById('editTaskModal').style.display = 'none';
     document.getElementById('editTaskForm').reset();
+    _depsSelected = [];
+    _depsEditingId = null;
+    document.getElementById('editDepsTags').innerHTML = '';
+    document.getElementById('editDepsDropdown').classList.add('hidden');
 }
 
 function handleEditTask(event) {
