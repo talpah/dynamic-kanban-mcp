@@ -14,7 +14,7 @@ Move a **ready** task to `progress` and begin work. Only `ready` tasks can be st
 **If `$ARGUMENTS` starts with `task-`** → use it as the task ID.
 
 **If `$ARGUMENTS` is free text** → this is a new task title. Do NOT create-and-start directly. Instead:
-1. Call `add_feature` with the title (priority `medium`, effort `m`) to create in `backlog`
+1. Call `add_feature` with the title (priority `medium`) to create in `backlog`
 2. Tell the user: "Created task `<id>`. Run `/kanban:prepare <id>` to generate a plan and move it to ready before starting."
 3. Stop here — do not move to progress.
 

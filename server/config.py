@@ -58,76 +58,8 @@ class KanbanConfig:
         {"id": "done", "name": "✅ Done", "emoji": "✅"},
     ]
 
-    # Priority and effort configurations
+    # Priority configurations
     PRIORITY_LEVELS = ["low", "medium", "high", "critical"]
-    EFFORT_LEVELS = ["xs", "s", "m", "l", "xl"]
-
-    # Epic categories
-    DEFAULT_EPICS = [
-        "general",
-        "frontend",
-        "backend",
-        "ui",
-        "api",
-        "database",
-        "auth",
-        "testing",
-        "deployment",
-    ]
-
-    # Centralized descriptive text configurations
-    STAGE_DESCRIPTIONS = {
-        1: "Foundation & Core Features",
-        2: "Feature Development",
-        3: "Integration & Enhancement",
-        4: "Advanced Features",
-        5: "Optimization & Polish",
-        6: "Release & Maintenance",
-    }
-
-    EFFORT_DESCRIPTIONS = {
-        "xs": "Extra Small - Quick task",
-        "s": "Small - Few hours",
-        "m": "Medium - Half day",
-        "l": "Large - Full day",
-        "xl": "Extra Large - Multiple days",
-    }
-
-    EPIC_DESCRIPTIONS = {
-        "frontend": "Frontend Development",
-        "backend": "Backend Development",
-        "ui": "User Interface",
-        "api": "API Development",
-        "database": "Database Design",
-        "auth": "Authentication",
-        "testing": "Testing & QA",
-        "deployment": "DevOps & Deployment",
-        "general": "General Development",
-    }
-
-    # Implementation plan templates by epic and stage
-    IMPLEMENTATION_PLANS = {
-        ("frontend", 1): "Implement basic UI components with responsive design",
-        ("backend", 1): "Create core API endpoints and data models",
-        ("ui", 1): "Build clean, responsive interface with modern frameworks",
-        ("api", 1): "Develop RESTful API with proper error handling",
-        ("database", 1): "Design and implement data schema",
-        ("auth", 1): "Implement authentication and authorization",
-        ("testing", 1): "Create comprehensive test suite",
-        ("deployment", 1): "Set up CI/CD pipeline and deployment",
-    }
-
-    # File suggestions by epic
-    FILE_SUGGESTIONS = {
-        "frontend": "src/components/ (React/Vue components), src/styles/ (CSS files)",
-        "backend": "src/api/ (API routes), src/models/ (data models)",
-        "ui": "src/components/ (UI components), public/index.html (HTML structure)",
-        "api": "src/routes/ (API endpoints), src/controllers/ (business logic)",
-        "database": "migrations/ (database schema), src/models/ (ORM models)",
-        "auth": "src/auth/ (authentication logic), middleware/ (auth middleware)",
-        "testing": "tests/ (test files), jest.config.js (test configuration)",
-        "deployment": ".github/workflows/ (CI/CD), docker/ (containerization)",
-    }
 
     # Validation settings
     MAX_TASK_TITLE_LENGTH = 100
@@ -246,9 +178,6 @@ class KanbanConfig:
             "title": "",
             "description": "",
             "priority": "medium",
-            "effort": "m",
-            "epic": "general",
-            "stage": 1,
             "status": "backlog",
             "dependencies": [],
             "acceptance": "Feature works as described",
@@ -296,33 +225,6 @@ class KanbanConfig:
         import os
 
         return os.path.exists(cls.get_ui_file_path())
-
-    @classmethod
-    def get_stage_name(cls, stage: int) -> str:
-        """Get descriptive name for a stage"""
-        return cls.STAGE_DESCRIPTIONS.get(stage, f"Stage {stage}")
-
-    @classmethod
-    def get_effort_description(cls, effort: str) -> str:
-        """Get descriptive text for effort level"""
-        return cls.EFFORT_DESCRIPTIONS.get(effort, effort)
-
-    @classmethod
-    def get_epic_description(cls, epic: str) -> str:
-        """Get descriptive text for epic category"""
-        return cls.EPIC_DESCRIPTIONS.get(epic, epic.title())
-
-    @classmethod
-    def get_implementation_plan(cls, epic: str, stage: int) -> str:
-        """Get implementation plan template for epic and stage"""
-        return cls.IMPLEMENTATION_PLANS.get(
-            (epic, stage), "Implement according to requirements and acceptance criteria"
-        )
-
-    @classmethod
-    def get_file_suggestions(cls, epic: str) -> str:
-        """Get file suggestions for an epic"""
-        return cls.FILE_SUGGESTIONS.get(epic, "Implementation-specific files based on requirements")
 
 
 # Global configuration instance

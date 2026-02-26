@@ -402,9 +402,6 @@ function createCard(feature) {
         <div class="card-meta">
             <div class="card-tags">
                 ${feature.priority ? `<span class="tag priority">${feature.priority}</span>` : ''}
-                ${feature.effort ? `<span class="tag effort">${feature.effort}</span>` : ''}
-                ${feature.epic ? `<span class="tag epic">${feature.epic}</span>` : ''}
-                ${feature.stage ? `<span class="tag stage">Stage ${feature.stage}</span>` : ''}
             </div>
         </div>
         ${dependencyText}
@@ -507,10 +504,7 @@ function showCardDetails(feature) {
     modalBody.innerHTML = `
         <h2>${feature.title}</h2>
         <p><strong>Description:</strong> ${feature.description || 'No description'}</p>
-        <p><strong>Stage:</strong> ${feature.stage || 'Not specified'}</p>
         <p><strong>Priority:</strong> ${feature.priority || 'Not specified'}</p>
-        <p><strong>Effort:</strong> ${feature.effort || 'Not specified'}</p>
-        <p><strong>Epic:</strong> ${feature.epic || 'Not specified'}</p>
         <p><strong>Dependencies:</strong> ${feature.dependencies && feature.dependencies.length ? feature.dependencies.join(', ') : 'None'}</p>
         <p><strong>Acceptance Criteria:</strong> ${feature.acceptance || 'Not specified'}</p>
         ${feature.plan ? `<div style="margin-top:12px"><strong>Implementation Plan:</strong><pre style="white-space:pre-wrap;font-size:0.85em;background:#f5f5f5;padding:8px;border-radius:4px;margin-top:4px">${feature.plan}</pre></div>` : ''}
@@ -725,9 +719,6 @@ function submitQuickAdd() {
         title,
         description: '',
         priority: 'medium',
-        effort: 'm',
-        epic: 'general',
-        stage: 1,
         status: 'backlog',
         dependencies: [],
         acceptance: 'Task completed successfully'
@@ -765,9 +756,6 @@ function handleAddTask(event) {
         title: formData.get('title'),
         description: formData.get('description'),
         priority: formData.get('priority'),
-        effort: formData.get('effort'),
-        epic: formData.get('epic'),
-        stage: parseInt(formData.get('stage')),
         status: 'backlog',
         dependencies: formData.get('dependencies') ? 
             formData.get('dependencies').split(',').map(d => d.trim()).filter(d => d) : [],
@@ -805,9 +793,6 @@ function editTask(taskId) {
     document.getElementById('editTaskTitle').value = feature.title;
     document.getElementById('editTaskDescription').value = feature.description;
     document.getElementById('editTaskPriority').value = feature.priority;
-    document.getElementById('editTaskEffort').value = feature.effort;
-    document.getElementById('editTaskEpic').value = feature.epic;
-    document.getElementById('editTaskStage').value = feature.stage;
     document.getElementById('editTaskAcceptance').value = feature.acceptance || '';
     document.getElementById('editTaskPlan').value = feature.plan || '';
     document.getElementById('editTaskDependencies').value = feature.dependencies.join(', ');
@@ -834,9 +819,6 @@ function handleEditTask(event) {
     feature.title = formData.get('title');
     feature.description = formData.get('description');
     feature.priority = formData.get('priority');
-    feature.effort = formData.get('effort');
-    feature.epic = formData.get('epic');
-    feature.stage = parseInt(formData.get('stage'));
     feature.acceptance = formData.get('acceptance') || 'Task completed successfully';
     feature.plan = formData.get('plan') || '';
     feature.dependencies = formData.get('dependencies') ?

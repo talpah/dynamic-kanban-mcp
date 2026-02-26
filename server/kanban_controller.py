@@ -167,9 +167,6 @@ class KanbanController:
                     "title": f"Task {task_id}",  # Basic title from ID
                     "description": f"Reconstructed task from progress file. Task ID: {task_id}",
                     "priority": "medium",  # Default priority
-                    "effort": "m",  # Default effort
-                    "epic": "general",  # Default epic
-                    "stage": 1,  # Default stage
                     "status": status,
                     "dependencies": [],  # No dependencies known
                     "acceptance": "Task works as expected",  # Default acceptance criteria
@@ -363,9 +360,9 @@ class KanbanController:
         if not ready_tasks:
             return None
 
-        # Sort by priority (critical > high > medium > low) then by stage (earlier stages first)
+        # Sort by priority (critical > high > medium > low)
         priority_order = {"critical": 4, "high": 3, "medium": 2, "low": 1}
-        ready_tasks.sort(key=lambda x: (priority_order[x["priority"]], -x["stage"]), reverse=True)
+        ready_tasks.sort(key=lambda x: priority_order[x["priority"]], reverse=True)
 
         return ready_tasks[0]
 
@@ -764,9 +761,6 @@ class KanbanController:
                         "title": feature_data["title"],
                         "description": feature_data["description"],
                         "priority": feature_data.get("priority", "medium"),
-                        "effort": feature_data.get("effort", "m"),
-                        "epic": feature_data.get("epic", "general"),
-                        "stage": feature_data.get("stage", 1),
                         "status": feature_data.get("status", "backlog"),
                         "dependencies": feature_data.get("dependencies", []),
                         "acceptance": feature_data.get("acceptance", "Feature works as described"),
@@ -1308,9 +1302,8 @@ class KanbanController:
         next_task = self.get_next_task()
         if next_task:
             title = next_task["title"]
-            stage = next_task["stage"]
             prio = next_task["priority"]
-            print(f"\n🎯 Next Task: {title} (Stage {stage}, {prio} priority)")
+            print(f"\n🎯 Next Task: {title} ({prio} priority)")
         else:
             print("\n🏁 No tasks ready for development")
 

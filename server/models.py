@@ -19,16 +19,6 @@ class Priority(StrEnum):
     CRITICAL = "critical"
 
 
-class Effort(StrEnum):
-    """Task effort estimates"""
-
-    XS = "xs"  # < 1 hour
-    S = "s"  # 2-4 hours
-    M = "m"  # Half day
-    L = "l"  # Full day
-    XL = "xl"  # Multiple days
-
-
 class Status(StrEnum):
     """Task status in kanban board"""
 
@@ -37,20 +27,6 @@ class Status(StrEnum):
     PROGRESS = "progress"
     TESTING = "testing"
     DONE = "done"
-
-
-class Epic(StrEnum):
-    """Epic categories for organizing tasks"""
-
-    GENERAL = "general"
-    FRONTEND = "frontend"
-    BACKEND = "backend"
-    UI = "ui"
-    API = "api"
-    DATABASE = "database"
-    AUTH = "auth"
-    TESTING = "testing"
-    DEPLOYMENT = "deployment"
 
 
 class Task(BaseModel):
@@ -64,9 +40,6 @@ class Task(BaseModel):
                 "title": "User Authentication",
                 "description": "Implement user login and registration system",
                 "priority": "high",
-                "effort": "l",
-                "epic": "backend",
-                "stage": 1,
                 "status": "backlog",
                 "dependencies": [],
                 "acceptance": "Users can register, login, and logout successfully",
@@ -78,9 +51,6 @@ class Task(BaseModel):
     title: str = Field(..., min_length=1, max_length=100, description="Task title")
     description: str = Field(..., min_length=1, max_length=1000, description="Task description")
     priority: Priority = Field(default=Priority.MEDIUM, description="Task priority level")
-    effort: Effort = Field(default=Effort.M, description="Estimated effort required")
-    epic: Epic = Field(default=Epic.GENERAL, description="Epic category")
-    stage: int = Field(default=1, ge=1, le=6, description="Development stage (1-6)")
     status: Status = Field(default=Status.BACKLOG, description="Current status")
     dependencies: list[str] = Field(
         default_factory=list, max_length=10, description="List of task IDs this task depends on"

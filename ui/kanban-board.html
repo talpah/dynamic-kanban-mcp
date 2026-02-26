@@ -202,9 +202,6 @@
         }
 
         .tag.priority { background: #e74c3c; color: white; }
-        .tag.effort { background: #f39c12; color: white; }
-        .tag.epic { background: #3498db; color: white; }
-        .tag.stage { background: #2ecc71; color: white; }
 
         .dependencies {
             margin-top: 8px;
@@ -399,15 +396,6 @@
         .legend-tag.priority-high { background: #f39c12; }
         .legend-tag.priority-medium { background: #3498db; }
         .legend-tag.priority-low { background: #2ecc71; }
-
-        .legend-tag.effort-xl { background: #8e44ad; }
-        .legend-tag.effort-l { background: #e74c3c; }
-        .legend-tag.effort-m { background: #f39c12; }
-        .legend-tag.effort-s { background: #3498db; }
-        .legend-tag.effort-xs { background: #2ecc71; }
-
-        .legend-tag.epic { background: #34495e; }
-        .legend-tag.stage { background: #16a085; }
 
         .legend-interaction {
             display: flex;
@@ -1003,29 +991,6 @@
                             <span>Nice to have</span>
                         </div>
                     </div>
-                    <div>
-                        <strong>Effort Estimates:</strong>
-                        <div class="legend-item">
-                            <span class="legend-tag effort-xs">XS</span>
-                            <span>< 1 hour</span>
-                        </div>
-                        <div class="legend-item">
-                            <span class="legend-tag effort-s">S</span>
-                            <span>2-4 hours</span>
-                        </div>
-                        <div class="legend-item">
-                            <span class="legend-tag effort-m">M</span>
-                            <span>Half day</span>
-                        </div>
-                        <div class="legend-item">
-                            <span class="legend-tag effort-l">L</span>
-                            <span>Full day</span>
-                        </div>
-                        <div class="legend-item">
-                            <span class="legend-tag effort-xl">XL</span>
-                            <span>Multiple days</span>
-                        </div>
-                    </div>
                 </div>
 
                 <!-- Interactive Features Section -->
@@ -1071,35 +1036,6 @@
                     <div class="legend-interaction">
                         <span>🔗</span>
                         <span><strong>Bidirectional:</strong> UI ↔ Claude synchronization</span>
-                    </div>
-                </div>
-
-                <!-- Categories Section -->
-                <div class="legend-section">
-                    <h3>📁 Categories & Stages</h3>
-                    <div>
-                        <strong>Epic Categories:</strong>
-                        <div class="legend-item">
-                            <span class="legend-tag epic">Frontend</span>
-                            <span class="legend-tag epic">Backend</span>
-                            <span class="legend-tag epic">API</span>
-                        </div>
-                        <div class="legend-item">
-                            <span class="legend-tag epic">Database</span>
-                            <span class="legend-tag epic">Testing</span>
-                            <span class="legend-tag epic">Deploy</span>
-                        </div>
-                    </div>
-                    <div style="margin-top: 10px;">
-                        <strong>Development Stages:</strong>
-                        <div class="legend-item">
-                            <span class="legend-tag stage">Stage 1</span>
-                            <span>Foundation & Core</span>
-                        </div>
-                        <div class="legend-item">
-                            <span class="legend-tag stage">Stage 2+</span>
-                            <span>Feature Development & Enhancement</span>
-                        </div>
                     </div>
                 </div>
 
@@ -1161,45 +1097,8 @@
                         </select>
                     </div>
                     
-                    <div class="form-group">
-                        <label for="taskEffort">Effort *</label>
-                        <select id="taskEffort" name="effort" required>
-                            <option value="xs">XS (< 1 hour)</option>
-                            <option value="s">S (2-4 hours)</option>
-                            <option value="m" selected>M (Half day)</option>
-                            <option value="l">L (Full day)</option>
-                            <option value="xl">XL (Multiple days)</option>
-                        </select>
-                    </div>
                 </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="taskEpic">Epic</label>
-                        <select id="taskEpic" name="epic">
-                            <option value="general" selected>General</option>
-                            <option value="frontend">Frontend</option>
-                            <option value="backend">Backend</option>
-                            <option value="api">API</option>
-                            <option value="database">Database</option>
-                            <option value="testing">Testing</option>
-                            <option value="deployment">Deployment</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="taskStage">Stage</label>
-                        <select id="taskStage" name="stage">
-                            <option value="1" selected>Stage 1 (Foundation)</option>
-                            <option value="2">Stage 2 (Development)</option>
-                            <option value="3">Stage 3 (Integration)</option>
-                            <option value="4">Stage 4 (Advanced)</option>
-                            <option value="5">Stage 5 (Optimization)</option>
-                            <option value="6">Stage 6 (Release)</option>
-                        </select>
-                    </div>
-                </div>
-                
+
                 <div class="form-group">
                     <label for="taskAcceptance">Acceptance Criteria</label>
                     <textarea id="taskAcceptance" name="acceptance" placeholder="What needs to be done for this task to be considered complete?"></textarea>
@@ -1248,45 +1147,8 @@
                         </select>
                     </div>
                     
-                    <div class="form-group">
-                        <label for="editTaskEffort">Effort *</label>
-                        <select id="editTaskEffort" name="effort" required>
-                            <option value="xs">XS (< 1 hour)</option>
-                            <option value="s">S (2-4 hours)</option>
-                            <option value="m">M (Half day)</option>
-                            <option value="l">L (Full day)</option>
-                            <option value="xl">XL (Multiple days)</option>
-                        </select>
-                    </div>
                 </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="editTaskEpic">Epic</label>
-                        <select id="editTaskEpic" name="epic">
-                            <option value="general">General</option>
-                            <option value="frontend">Frontend</option>
-                            <option value="backend">Backend</option>
-                            <option value="api">API</option>
-                            <option value="database">Database</option>
-                            <option value="testing">Testing</option>
-                            <option value="deployment">Deployment</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="editTaskStage">Stage</label>
-                        <select id="editTaskStage" name="stage">
-                            <option value="1">Stage 1 (Foundation)</option>
-                            <option value="2">Stage 2 (Development)</option>
-                            <option value="3">Stage 3 (Integration)</option>
-                            <option value="4">Stage 4 (Advanced)</option>
-                            <option value="5">Stage 5 (Optimization)</option>
-                            <option value="6">Stage 6 (Release)</option>
-                        </select>
-                    </div>
-                </div>
-                
+
                 <div class="form-group">
                     <label for="editTaskAcceptance">Acceptance Criteria</label>
                     <textarea id="editTaskAcceptance" name="acceptance"></textarea>

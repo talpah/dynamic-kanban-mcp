@@ -69,13 +69,6 @@ class KanbanMCPServer:
                         "enum": ["low", "medium", "high", "critical"],
                         "description": "Priority level",
                     },
-                    "effort": {
-                        "type": "string",
-                        "enum": ["xs", "s", "m", "l", "xl"],
-                        "description": "Effort estimate",
-                    },
-                    "epic": {"type": "string", "description": "Epic category"},
-                    "stage": {"type": "integer", "description": "Stage number"},
                     "dependencies": {
                         "type": "array",
                         "items": {"type": "string"},
@@ -83,7 +76,7 @@ class KanbanMCPServer:
                     },
                     "acceptance_criteria": {"type": "string", "description": "Acceptance criteria"},
                 },
-                "required": ["title", "description", "priority", "effort"],
+                "required": ["title", "description", "priority"],
                 "additionalProperties": False,
             },
             self.handle_add_feature,
@@ -459,9 +452,6 @@ class KanbanMCPServer:
             "title": arguments["title"],
             "description": arguments["description"],
             "priority": arguments["priority"],
-            "effort": arguments["effort"],
-            "epic": arguments.get("epic", "general"),
-            "stage": arguments.get("stage", 1),
             "status": "backlog",
             "dependencies": arguments.get("dependencies", []),
             "acceptance": arguments.get("acceptance_criteria", "Feature works as described"),
@@ -501,8 +491,6 @@ class KanbanMCPServer:
 
 **Queued Action:** Add feature "{arguments["title"]}"
 - Priority: {arguments["priority"]}
-- Effort: {arguments["effort"]}
-- Epic: {arguments.get("epic", "general")}
 
 📋 **Current Status:** User is managing the board manually
 🎯 **What happens next:** This action will be applied when the user switches back to Autonomous Mode
@@ -527,9 +515,6 @@ feature manually."""
 **Feature Details:**
 - ID: {feature_id}
 - Priority: {new_feature["priority"]}
-- Effort: {new_feature["effort"]}
-- Epic: {new_feature["epic"]}
-- Stage: {new_feature["stage"]}
 - Dependencies: {", ".join(new_feature["dependencies"]) if new_feature["dependencies"] else "None"}
 
 **Description:** {new_feature["description"]}
@@ -607,9 +592,6 @@ features manually."""
                     "title": feature_data["title"],
                     "description": feature_data["description"],
                     "priority": feature_data.get("priority", "medium"),
-                    "effort": feature_data.get("effort", "m"),
-                    "epic": feature_data.get("epic", "general"),
-                    "stage": feature_data.get("stage", 1),
                     "status": feature_data.get("status", "backlog"),
                     "dependencies": feature_data.get("dependencies", []),
                     "acceptance": feature_data.get("acceptance", "Feature works as described"),
@@ -666,7 +648,7 @@ features manually."""
         # Get next task
         next_task = self.kanban.get_next_task()
         next_task_info = (
-            f"{next_task['title']} (Stage {next_task['stage']}, {next_task['priority']} priority)"
+            f"{next_task['title']} ({next_task['priority']} priority)"
             if next_task
             else "No tasks ready"
         )
@@ -712,11 +694,7 @@ Recent Activity: {len(progress.get("activity", []))} actions logged"""
         task_list = "📋 Ready Tasks:\n\n"
         for task in ready_tasks:
             task_list += f"🎯 **{task['id']}**: {task['title']}\n"
-            task_list += (
-                f"   Stage {task['stage']} | {task['priority']} priority"
-                f" | {task['effort']} effort\n"
-            )
-            task_list += f"   Epic: {task['epic']}\n"
+            task_list += f"   {task['priority']} priority\n"
             task_list += f"   Description: {task['description']}\n\n"
 
         return task_list
@@ -731,10 +709,7 @@ Recent Activity: {len(progress.get("activity", []))} actions logged"""
         return f"""🎯 Next Priority Task: **{next_task["id"]}**
 
 **Title**: {next_task["title"]}
-**Stage**: {next_task["stage"]}
 **Priority**: {next_task["priority"]}
-**Effort**: {next_task["effort"]}
-**Epic**: {next_task["epic"]}
 **Description**: {next_task["description"]}
 **Dependencies**: {", ".join(next_task["dependencies"]) if next_task["dependencies"] else "None"}
 **Acceptance Criteria**: {next_task["acceptance"]}
@@ -902,9 +877,6 @@ progress notes manually."""
         return f"""🔍 Task Analysis: **{feature["title"]}**
 
 **Requirements Analysis:**
-- Stage: {feature["stage"]} ({self.get_stage_name(feature["stage"])})
-- Effort Level: {feature["effort"]} ({self.get_effort_description(feature["effort"])})
-- Epic: {feature["epic"]} ({self.get_epic_description(feature["epic"])})
 - Priority: {feature["priority"]}
 
 **Implementation Scope:**
@@ -915,13 +887,7 @@ progress notes manually."""
 
 **Dependencies:**
 {deps_list}
-Dependencies Met: {deps_met}
-
-**Recommended Implementation Plan:**
-{self.generate_implementation_plan(feature)}
-
-**Files Likely to be Modified:**
-{self.suggest_target_files(feature)}"""
+Dependencies Met: {deps_met}"""
 
     def handle_get_task_details(self, arguments: dict[str, Any]) -> str:
         """Get detailed task information"""
@@ -952,10 +918,7 @@ Dependencies Met: {deps_met}
 **Title:** {feature["title"]}
 **Description:** {feature["description"]}
 **Current Status:** {current_status}
-**Stage:** {feature["stage"]} ({self.get_stage_name(feature["stage"])})
 **Priority:** {feature["priority"]}
-**Effort:** {feature["effort"]} ({self.get_effort_description(feature["effort"])})
-**Epic:** {feature["epic"]} ({self.get_epic_description(feature["epic"])})
 **Dependencies:** {", ".join(feature["dependencies"]) if feature["dependencies"] else "None"}
 **Acceptance Criteria:** {feature["acceptance"]}{plan_text}{notes_text}"""
 
@@ -1539,30 +1502,6 @@ To proceed with complete reset, call this tool again with `confirm: true`."""
         else:
             return "❌ Failed to reset board. Please check logs and try again."
 
-    # Helper Methods - Now using centralized configuration
-    def get_stage_name(self, stage: int) -> str:
-        """Get descriptive name for a stage"""
-        return CONFIG.get_stage_name(stage)
-
-    def get_effort_description(self, effort: str) -> str:
-        """Get descriptive text for effort level"""
-        return CONFIG.get_effort_description(effort)
-
-    def get_epic_description(self, epic: str) -> str:
-        """Get descriptive text for epic category"""
-        return CONFIG.get_epic_description(epic)
-
-    def generate_implementation_plan(self, feature: dict) -> str:
-        """Generate implementation plan based on feature characteristics"""
-        epic = feature.get("epic", "general")
-        stage = feature.get("stage", 1)
-        return CONFIG.get_implementation_plan(epic, stage)
-
-    def suggest_target_files(self, feature: dict) -> str:
-        """Suggest which files might need modification"""
-        epic = feature.get("epic", "general")
-        return CONFIG.get_file_suggestions(epic)
-
     def run_server(self):
         """Run the MCP server"""
         print("🚀 Starting Dynamic Kanban MCP Server v3.0...")
@@ -1604,9 +1543,8 @@ To proceed with complete reset, call this tool again with `confirm: true`."""
             next_task = self.kanban.get_next_task()
             if next_task:
                 title = next_task["title"]
-                stage = next_task["stage"]
                 prio = next_task["priority"]
-                print(f"  {title} (Stage {stage}, {prio} priority)")
+                print(f"  {title} ({prio} priority)")
             else:
                 print("  No tasks ready for development")
         else:

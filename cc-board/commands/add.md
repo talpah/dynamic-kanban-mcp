@@ -1,6 +1,6 @@
 ---
 name: kanban:add
-description: Add a task to the kanban board — interactively collects title, description, priority, effort, epic, stage, and dependencies
+description: Add a task to the kanban board — collects title, description, priority, and dependencies
 argument-hint: "[title]"
 disable-model-invocation: true
 ---
@@ -15,11 +15,8 @@ Collect the following fields interactively. If `$ARGUMENTS` is provided, use it 
 **Ask one by one (user can skip with Enter for defaults):**
 - **description**: what needs to be done (default: empty)
 - **priority**: `low` / `medium` / `high` / `critical` (default: `medium`)
-- **effort**: estimated story points or days, number (default: 1)
 
 **Optional — only ask if user seems to want them:**
-- **epic**: group/epic name this task belongs to
-- **stage**: initial board column (default: `backlog`)
 - **dependencies**: comma-separated task IDs this depends on
 
 Once all values are collected, call `add_feature` with the gathered arguments.
