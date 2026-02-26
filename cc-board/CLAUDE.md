@@ -19,6 +19,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `/kanban:analyze` | Analyze board state and priorities |
 | `/kanban:task` | Get details or work on a specific task |
 | `/kanban:validate` | Validate board consistency |
+| `/kanban:prepare` | Quick-plan a backlog task and move it to ready |
+| `/kanban:start` | Start working on a ready task — move to in-progress |
 
 ## Architecture
 

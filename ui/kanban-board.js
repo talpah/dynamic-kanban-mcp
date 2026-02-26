@@ -389,11 +389,10 @@ function createCard(feature) {
     const checkboxHtml = state.isManualMode ? 
         `<input type="checkbox" class="card-checkbox" onchange="toggleCardSelection('${feature.id}')" ${state.selectedCards.has(feature.id) ? 'checked' : ''}>` : '';
     
-    const actionsHtml = state.isManualMode ? 
-        `<div class="card-actions">
-            <button class="card-action-btn edit" onclick="editTask('${feature.id}')" title="Edit">✏️</button>
-            <button class="card-action-btn delete" onclick="deleteTask('${feature.id}')" title="Delete">🗑️</button>
-        </div>` : '';
+    const actionsHtml = `<div class="card-actions">
+        <button class="card-action-btn edit" onclick="editTask('${feature.id}')" title="Edit">✏️</button>
+        <button class="card-action-btn delete" onclick="deleteTask('${feature.id}')" title="Delete">🗑️</button>
+    </div>`;
 
     card.innerHTML = `
         ${checkboxHtml}
@@ -414,10 +413,10 @@ function createCard(feature) {
     // Add drag event listeners
     setupDragEvents(card, feature);
     
-    // Click anywhere on card (outside action buttons) opens edit form
+    // Click card body → details/commands modal; action buttons handle edit/delete
     card.addEventListener('click', (e) => {
         if (!e.target.classList.contains('card-action-btn') && !e.target.classList.contains('card-checkbox')) {
-            editTask(feature.id);
+            showCardDetails(feature);
         }
     });
     
@@ -491,7 +490,20 @@ function setupDropZone(dropZone, status) {
 function showCardDetails(feature) {
     const modal = document.getElementById('cardModal');
     const modalBody = document.getElementById('modal-body');
-    
+    const status = feature.status || 'backlog';
+
+    const claudeCmd = _getClaudeCmd(feature.id, status);
+    const actionsHtml = claudeCmd ? `
+        <div style="margin-top:16px;padding-top:12px;border-top:1px solid #e0e0e0">
+            <span style="font-size:0.75em;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:0.5px">Run in Claude</span>
+            <div style="margin-top:8px">
+                <button
+                    onclick="copyClaudeCommand(this, '${claudeCmd}')"
+                    style="font-family:monospace;font-size:0.82em;background:#f0f4ff;border:1px solid #c5d0f0;border-radius:6px;padding:6px 12px;cursor:pointer;color:#3a4ecc"
+                >${claudeCmd} 📋</button>
+            </div>
+        </div>` : '';
+
     modalBody.innerHTML = `
         <h2>${feature.title}</h2>
         <p><strong>Description:</strong> ${feature.description || 'No description'}</p>
@@ -501,9 +513,46 @@ function showCardDetails(feature) {
         <p><strong>Epic:</strong> ${feature.epic || 'Not specified'}</p>
         <p><strong>Dependencies:</strong> ${feature.dependencies && feature.dependencies.length ? feature.dependencies.join(', ') : 'None'}</p>
         <p><strong>Acceptance Criteria:</strong> ${feature.acceptance || 'Not specified'}</p>
+        ${feature.plan ? `<div style="margin-top:12px"><strong>Implementation Plan:</strong><pre style="white-space:pre-wrap;font-size:0.85em;background:#f5f5f5;padding:8px;border-radius:4px;margin-top:4px">${feature.plan}</pre></div>` : ''}
+        ${actionsHtml}
+        <div style="margin-top:16px;padding-top:12px;border-top:1px solid #e0e0e0;display:flex;gap:8px">
+            <button onclick="document.getElementById('cardModal').style.display='none'; editTask('${feature.id}')" style="padding:7px 16px;background:#4a6fa5;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:0.9em">✏️ Edit Task</button>
+        </div>
     `;
-    
+
     modal.style.display = 'block';
+}
+
+function _getClaudeCmd(taskId, status) {
+    if (status === 'backlog') return `/kanban:prepare ${taskId}`;
+    if (status === 'ready') return `/kanban:start ${taskId}`;
+    return null;
+}
+
+function copyClaudeCommand(btn, cmd) {
+    navigator.clipboard.writeText(cmd).then(() => {
+        const original = btn.innerHTML;
+        btn.innerHTML = '<span style="color:#2a9d4e">✓ Copied!</span>';
+        btn.style.background = '#e8f8ee';
+        btn.style.borderColor = '#a8ddb9';
+        setTimeout(() => {
+            btn.innerHTML = original;
+            btn.style.background = '#f0f4ff';
+            btn.style.borderColor = '#c5d0f0';
+        }, 1500);
+    }).catch(() => {
+        // Fallback for browsers without clipboard API
+        const ta = document.createElement('textarea');
+        ta.value = cmd;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        btn.innerHTML = '<span style="color:#2a9d4e">✓ Copied!</span>';
+        setTimeout(() => { btn.innerHTML = btn.dataset.orig; }, 1500);
+    });
 }
 
 // Update counts
@@ -760,6 +809,7 @@ function editTask(taskId) {
     document.getElementById('editTaskEpic').value = feature.epic;
     document.getElementById('editTaskStage').value = feature.stage;
     document.getElementById('editTaskAcceptance').value = feature.acceptance || '';
+    document.getElementById('editTaskPlan').value = feature.plan || '';
     document.getElementById('editTaskDependencies').value = feature.dependencies.join(', ');
     
     // Show modal
@@ -788,7 +838,8 @@ function handleEditTask(event) {
     feature.epic = formData.get('epic');
     feature.stage = parseInt(formData.get('stage'));
     feature.acceptance = formData.get('acceptance') || 'Task completed successfully';
-    feature.dependencies = formData.get('dependencies') ? 
+    feature.plan = formData.get('plan') || '';
+    feature.dependencies = formData.get('dependencies') ?
         formData.get('dependencies').split(',').map(d => d.trim()).filter(d => d) : [];
     
     // Sync with WebSocket if connected

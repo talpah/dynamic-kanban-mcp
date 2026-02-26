@@ -193,6 +193,21 @@ class KanbanMCPServer:
         )
 
         self.server.add_tool(
+            "update_task_plan",
+            "Store an implementation plan on a task (separate from description)",
+            {
+                "type": "object",
+                "properties": {
+                    "task_id": {"type": "string", "description": "ID of the task"},
+                    "plan": {"type": "string", "description": "Implementation plan text"},
+                },
+                "required": ["task_id", "plan"],
+                "additionalProperties": False,
+            },
+            self.handle_update_task_plan,
+        )
+
+        self.server.add_tool(
             "kanban_start_session",
             "Start a development session",
             {
@@ -821,6 +836,27 @@ progress notes manually."""
             "🔗 All connected UIs updated automatically"
         )
 
+    def handle_update_task_plan(self, arguments: dict[str, Any]) -> str:
+        """Store an implementation plan on a task"""
+        task_id = arguments["task_id"]
+        plan = arguments["plan"]
+
+        if not self.kanban.claude_action_allowed():
+            self.kanban.queue_claude_action(
+                "update_task_plan",
+                {"task_id": task_id, "plan": plan},
+                f"Update plan for '{task_id}'",
+            )
+            return "🔒 **Board is in Manual Mode - Action Queued**"
+
+        if not self.kanban.update_task_plan(task_id, plan):
+            return f"❌ Task {task_id} not found"
+
+        return (
+            f"📋 Plan updated for {task_id}\n"
+            "🔗 All connected UIs updated automatically"
+        )
+
     def handle_start_session(self, arguments: dict[str, Any]) -> str:
         """Start development session"""
         session_name = arguments["session_name"]
@@ -907,6 +943,10 @@ Dependencies Met: {deps_met}
             for note in dev_notes[-3:]:  # Last 3 notes
                 notes_text += f"- {note['timestamp']}: {note['notes']}\n"
 
+        plan_text = ""
+        if feature.get("plan"):
+            plan_text = f"\n**Implementation Plan:**\n{feature['plan']}"
+
         return f"""📋 Task Details: **{task_id}**
 
 **Title:** {feature["title"]}
@@ -917,7 +957,7 @@ Dependencies Met: {deps_met}
 **Effort:** {feature["effort"]} ({self.get_effort_description(feature["effort"])})
 **Epic:** {feature["epic"]} ({self.get_epic_description(feature["epic"])})
 **Dependencies:** {", ".join(feature["dependencies"]) if feature["dependencies"] else "None"}
-**Acceptance Criteria:** {feature["acceptance"]}{notes_text}"""
+**Acceptance Criteria:** {feature["acceptance"]}{plan_text}{notes_text}"""
 
     def handle_validate_dependencies(self, arguments: dict[str, Any]) -> str:
         """Validate if a task's dependencies are completed and check for circular dependencies"""

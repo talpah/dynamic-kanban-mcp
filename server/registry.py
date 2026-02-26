@@ -99,6 +99,41 @@ def deregister(pid: int) -> None:
     logger.info(f"Deregistered pid={pid} from registry")
 
 
+def kill_stale_for_project(project_root: str) -> int:
+    """Kill any existing servers for the same project_root and remove their registry entries.
+
+    Called on startup so a new session cleanly replaces any orphaned process
+    from a previous session that wasn't cleaned up on exit.
+
+    Returns the number of processes killed.
+    """
+    import signal
+
+    path = _registry_path()
+    if not path.exists():
+        return 0
+
+    killed = 0
+    with open(path, "a+") as f:
+        fcntl.flock(f, fcntl.LOCK_EX)
+        try:
+            entries = _prune(_read_registry(f))
+            stale = [e for e in entries if e["project_root"] == project_root and e["pid"] != os.getpid()]
+            for entry in stale:
+                try:
+                    os.kill(entry["pid"], signal.SIGTERM)
+                    killed += 1
+                    logger.info(f"Killed stale server pid={entry['pid']} for {project_root}")
+                except (ProcessLookupError, PermissionError):
+                    pass
+            remaining = [e for e in entries if e["project_root"] != project_root or e["pid"] == os.getpid()]
+            _write_registry(f, remaining)
+        finally:
+            fcntl.flock(f, fcntl.LOCK_UN)
+
+    return killed
+
+
 def get_active_servers() -> list[dict]:
     """Return live registry entries, pruning stale ones."""
     path = _registry_path()

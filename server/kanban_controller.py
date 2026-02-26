@@ -45,14 +45,11 @@ class KanbanController:
         logging.basicConfig(level=logging.INFO)
         self.logger = logging.getLogger("kanban_controller")
 
-        # Load static assets into memory for HTTP serving
-        self._board_html = self._read_static("kanban-board.html")
-        self._board_js = self._read_static("kanban-board.js")
-        self._dashboard_html = self._read_static("dashboard.html")
+        self._static_dir = Path(__file__).parent.parent / "ui"
 
     def _read_static(self, filename: str) -> str:
-        """Read a static file from the ui/ directory into a string."""
-        path = Path(__file__).parent.parent / "ui" / filename
+        """Read a static file from the ui/ directory."""
+        path = self._static_dir / filename
         try:
             return path.read_text(encoding="utf-8")
         except FileNotFoundError:
@@ -77,15 +74,15 @@ class KanbanController:
 
         if path in ("/", "/index.html"):
             return self._make_response(
-                connection, HTTPStatus.OK, self._board_html, "text/html; charset=utf-8"
+                connection, HTTPStatus.OK, self._read_static("kanban-board.html"), "text/html; charset=utf-8"
             )
         if path == "/kanban-board.js":
             return self._make_response(
-                connection, HTTPStatus.OK, self._board_js, "application/javascript; charset=utf-8"
+                connection, HTTPStatus.OK, self._read_static("kanban-board.js"), "application/javascript; charset=utf-8"
             )
         if path == "/dashboard":
             return self._make_response(
-                connection, HTTPStatus.OK, self._dashboard_html, "text/html; charset=utf-8"
+                connection, HTTPStatus.OK, self._read_static("dashboard.html"), "text/html; charset=utf-8"
             )
         if path == "/api/status":
             body = json.dumps(self._get_status_summary())
@@ -106,7 +103,7 @@ class KanbanController:
 
         if path in ("/", "/index.html"):
             return self._make_response(
-                connection, HTTPStatus.OK, self._dashboard_html, "text/html; charset=utf-8"
+                connection, HTTPStatus.OK, self._read_static("dashboard.html"), "text/html; charset=utf-8"
             )
         if path == "/api/registry":
             body = json.dumps(registry.get_active_servers())
@@ -505,6 +502,16 @@ class KanbanController:
         if notes:
             print(f"   📝 {notes}")
 
+        return True
+
+    def update_task_plan(self, task_id: str, plan: str) -> bool:
+        """Store an implementation plan on a task"""
+        feature = next((f for f in self.features if f["id"] == task_id), None)
+        if not feature:
+            return False
+        feature["plan"] = plan
+        self._save_features_to_file()
+        print(f"📋 Plan updated for {task_id}")
         return True
 
     def update_progress(self, task_id: str, notes: str):
@@ -1339,6 +1346,14 @@ class KanbanController:
 
     async def start_websocket_server(self):
         """Start HTTP+WebSocket server with fallback port selection, then claim dashboard port."""
+        # Kill any orphaned server from a previous session for the same project
+        _, project_root = self._get_project_info()
+        killed = registry.kill_stale_for_project(project_root)
+        if killed:
+            self.logger.info(f"Killed {killed} stale server(s) for {project_root}")
+            import asyncio as _asyncio
+            await _asyncio.sleep(0.5)  # Brief pause for port release
+
         original_port = self.websocket_port
 
         for _attempt in range(5):  # Try up to 5 different ports
