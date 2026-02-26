@@ -1498,7 +1498,10 @@ class KanbanController:
         elif message_type == "refresh_board":
             # Force refresh from files and notify all clients
             self.refresh_and_notify_clients()
-            await websocket.send(json.dumps({"type": "refresh_response", "success": True}))
+            board_state = self.get_board_state()
+            await websocket.send(
+                json.dumps({"type": "refresh_response", "success": True, "data": board_state})
+            )
 
         # ===== MODE MANAGEMENT MESSAGES =====
         elif message_type == "set_mode":

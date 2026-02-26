@@ -11,8 +11,7 @@ const CONFIG = {
         {"id": "testing", "name": "🧪 Testing", "emoji": "🧪"},
         {"id": "done", "name": "✅ Done", "emoji": "✅"}
     ],
-    reconnectDelay: window.KANBAN_RECONNECT_DELAY || 3000,
-    maxReconnectAttempts: window.KANBAN_MAX_RECONNECTS || 10
+    reconnectDelay: window.KANBAN_RECONNECT_DELAY || 3000
 };
 
 // State management
@@ -102,20 +101,16 @@ function connectWebSocket() {
 }
 
 function scheduleReconnect() {
-    if (state.reconnectAttempts >= CONFIG.maxReconnectAttempts) {
-        console.log('❌ Max reconnection attempts reached');
-        updateConnectionStatus(false, 'Max reconnection attempts reached');
-        return;
-    }
-    
     state.reconnectAttempts++;
     const delay = Math.min(CONFIG.reconnectDelay * Math.pow(2, state.reconnectAttempts - 1), 30000);
-    
-    console.log(`🔄 Attempting to reconnect in ${delay/1000}s (attempt ${state.reconnectAttempts}/${CONFIG.maxReconnectAttempts})`);
-    
+
+    if (state.reconnectAttempts % 10 === 0) {
+        console.warn(`⚠️ Still trying to reconnect (attempt ${state.reconnectAttempts})…`);
+    }
+    console.log(`🔄 Reconnect in ${delay/1000}s (attempt ${state.reconnectAttempts})`);
+
     state.reconnectTimer = setTimeout(() => {
         if (!state.connected) {
-            console.log(`🔄 Reconnection attempt ${state.reconnectAttempts}`);
             connectWebSocket();
         }
     }, delay);
@@ -134,6 +129,9 @@ function handleWebSocketMessage(message) {
             break;
         case 'refresh_response':
             console.log('✅ Board refreshed from server files');
+            if (message.data) {
+                updateBoardFromServer(message.data);
+            }
             showNotification('Board refreshed from files', 'success');
             break;
         case 'error':
