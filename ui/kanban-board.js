@@ -394,6 +394,7 @@ function createCard(feature) {
         <button class="card-action-btn delete" onclick="deleteTask('${feature.id}')" title="Delete">🗑️</button>
     </div>`;
 
+    const shortId = feature.id.slice(-8);
     card.innerHTML = `
         ${checkboxHtml}
         ${actionsHtml}
@@ -402,6 +403,7 @@ function createCard(feature) {
         <div class="card-meta">
             <div class="card-tags">
                 ${feature.priority ? `<span class="tag priority">${feature.priority}</span>` : ''}
+                <span class="tag task-id-badge" title="${feature.id}" onclick="event.stopPropagation();copyTaskId(this,'${feature.id}')">${shortId}</span>
             </div>
         </div>
         ${dependencyText}
@@ -503,6 +505,7 @@ function showCardDetails(feature) {
 
     modalBody.innerHTML = `
         <h2>${feature.title}</h2>
+        <p><span class="task-id-badge" title="Click to copy" onclick="copyTaskId(this,'${feature.id}')">${feature.id}</span></p>
         <p><strong>Description:</strong> ${feature.description || 'No description'}</p>
         <p><strong>Priority:</strong> ${feature.priority || 'Not specified'}</p>
         <p><strong>Dependencies:</strong> ${feature.dependencies && feature.dependencies.length ? feature.dependencies.join(', ') : 'None'}</p>
@@ -547,6 +550,20 @@ function copyClaudeCommand(btn, cmd) {
         btn.innerHTML = '<span style="color:#2a9d4e">✓ Copied!</span>';
         setTimeout(() => { btn.innerHTML = btn.dataset.orig; }, 1500);
     });
+}
+
+function copyTaskId(el, id) {
+    navigator.clipboard.writeText(id).then(() => {
+        const orig = el.textContent;
+        el.textContent = '✓ Copied!';
+        el.style.background = '#e8f8ee';
+        el.style.color = '#2a9d4e';
+        setTimeout(() => {
+            el.textContent = orig;
+            el.style.background = '';
+            el.style.color = '';
+        }, 1500);
+    }).catch(() => {});
 }
 
 // Update counts
@@ -880,6 +897,11 @@ function editTask(taskId) {
 
     // Populate edit form
     document.getElementById('editTaskId').value = feature.id;
+    const idDisplay = document.getElementById('editTaskIdDisplay');
+    if (idDisplay) {
+        idDisplay.textContent = feature.id;
+        idDisplay.onclick = () => copyTaskId(idDisplay, feature.id);
+    }
     document.getElementById('editTaskTitle').value = feature.title;
     document.getElementById('editTaskDescription').value = feature.description;
     document.getElementById('editTaskPriority').value = feature.priority;
