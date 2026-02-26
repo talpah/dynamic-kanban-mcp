@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "dynamic-kanban-mcp",
-  "version": "2.0.0",
+  "version": "2.2.0",
   "description": "Per-project kanban board for Claude Code with real-time WebSocket UI",
   "owner": {
     "name": "Cosmin",
@@ -11,7 +11,7 @@
     {
       "name": "kanban",
       "description": "Per-project kanban board backed by dynamic-kanban-mcp. Commands: /kanban:setup, /kanban:status, /kanban:start, /kanban:stop, /kanban:uninstall",
-      "version": "2.0.0",
+      "version": "2.2.0",
       "source": "./cc-board",
       "category": "productivity"
     }
