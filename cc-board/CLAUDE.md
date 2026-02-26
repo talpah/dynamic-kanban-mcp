@@ -72,6 +72,10 @@ The server (`server/mcp-kanban-server.py`) starts as a Claude Code MCP subproces
 
 ## Mandatory task flow
 
+**NEVER begin implementation before `/kanban:start` has been called.**
+**NEVER call `kanban_move_card` with `new_status: "progress"` directly.**
+**NEVER skip `/kanban:prepare` — a task without a plan cannot be started.**
+
 Every task MUST follow this flow in order — no skipping steps:
 
 ```
@@ -80,14 +84,12 @@ backlog → (prepare) → ready → (start) → progress → testing → (tested
 
 | Step | Command | What happens |
 |------|---------|-------------|
-| 1 | `/kanban:prepare <id>` | Spawns plan agent, stores plan on task, moves to `ready` |
-| 2 | `/kanban:start <id>` | Moves to `progress`, starts session |
-| 3 | *(implement)* | Do the actual work |
+| 1 | `add_feature` | Creates task in backlog |
+| 2 | `/kanban:prepare <id>` | Spawns plan agent, stores plan on task, moves to `ready` |
+| 3 | `/kanban:start <id>` | Moves to `progress`, starts session — then begin implementation |
 | 4 | `kanban_move_card` → `testing` | Signal work is done, needs verification |
 | 5 | *(test)* | Verify the implementation actually works |
 | 6 | `kanban_move_card` → `done` | Only after testing passes |
-
-**Never move a task from `backlog` directly to `progress`.** A task without a plan cannot be started.
 
 ## New work hook
 

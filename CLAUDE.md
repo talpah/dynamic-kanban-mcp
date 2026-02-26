@@ -8,14 +8,30 @@ This project has a kanban board enabled. The `kanban` MCP server starts automati
 
 Key tools:
 - `kanban_status` — board overview with task counts per column and board URL
-- `add_feature` — add a task (id, title, description, priority, effort)
-- `kanban_move_card` — advance: backlog → ready → progress → testing → done
+- `add_feature` — add a task (title, description, priority)
+- `kanban_move_card` — advance cards through the flow
 - `kanban_get_next_task` — next highest-priority ready task
 - `kanban_start_session` / `kanban_end_session` — track work sessions
 
-Task sequencing: move **one** task to `progress` at a time. Only advance the next `ready` task after the current one is `done`.
+## MANDATORY task flow — NEVER skip steps
 
-**New work:** before starting any non-trivial task the user requests, check if it already exists on the board. If not, call `add_feature` to create it, then move it to `progress` before beginning.
+Every non-trivial task MUST follow this exact sequence:
+
+```
+1. add_feature          → creates task in backlog
+2. /kanban:prepare <id> → plan agent generates plan, moves task to ready
+3. /kanban:start <id>   → moves task to progress, then begin implementation
+```
+
+**NEVER** call `kanban_move_card` with `new_status: "progress"` directly.
+**NEVER** begin implementation before `/kanban:start` has been called.
+**NEVER** skip `/kanban:prepare` — tasks without a plan cannot be started.
+
+Only trivial requests (single command, status check, one-liner, answering a question) may proceed without creating a task.
+
+A `UserPromptSubmit` hook fires on every message. When it warns that no task is in progress, classify the request and follow the mandatory flow if non-trivial.
+
+Task sequencing: move **one** task to `progress` at a time. Complete the full flow (progress → testing → done) before starting the next.
 
 Board data: `.kanban/kanban-progress.json`
 Board UI: run `kanban_status` after session start to get the HTTP URL.
