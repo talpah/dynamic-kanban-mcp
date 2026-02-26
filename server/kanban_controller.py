@@ -354,18 +354,11 @@ class KanbanController:
         progress = self.load_progress()
         board_state = progress["boardState"]
 
-        # Find tasks that are ready (all dependencies completed)
         ready_tasks = []
         for feature in self.features:
             current_status = feature.get("status", board_state.get(feature["id"], "backlog"))
-            if current_status == "backlog":
-                # Check if all dependencies are done
-                deps_ready = all(
-                    board_state.get(dep_id, "backlog") == "done"
-                    for dep_id in feature["dependencies"]
-                )
-                if deps_ready:
-                    ready_tasks.append(feature)
+            if current_status == "ready":
+                ready_tasks.append(feature)
 
         if not ready_tasks:
             return None
@@ -384,13 +377,8 @@ class KanbanController:
         ready_tasks = []
         for feature in self.features:
             current_status = feature.get("status", board_state.get(feature["id"], "backlog"))
-            if current_status == "backlog":
-                deps_ready = all(
-                    board_state.get(dep_id, "backlog") == "done"
-                    for dep_id in feature["dependencies"]
-                )
-                if deps_ready:
-                    ready_tasks.append(feature)
+            if current_status == "ready":
+                ready_tasks.append(feature)
 
         return ready_tasks
 

@@ -317,7 +317,7 @@ function createColumns() {
                 <button class="column-clear-btn" onclick="showClearColumnModal('${column.id}')" title="Clear ${column.name}">×</button>
             </div>
             ${isBacklog ? `<div class="quick-add-row">
-                <input class="quick-add-input" id="quick-add-input" type="text" placeholder="+ Add task…" maxlength="120"
+                <input class="quick-add-input" id="quick-add-input" type="text" placeholder="+ Add task…"
                        onkeydown="handleQuickAddKey(event)">
                 <button class="quick-add-submit" onclick="submitQuickAdd()">Add</button>
             </div>` : ''}
