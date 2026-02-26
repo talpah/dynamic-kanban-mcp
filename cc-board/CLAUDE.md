@@ -70,20 +70,40 @@ The server (`server/mcp-kanban-server.py`) starts as a Claude Code MCP subproces
 - `http://127.0.0.1:8700/` — multi-project dashboard (first server claims this port)
 - `http://127.0.0.1:<port>/api/registry` — list of all active servers
 
-## Task sequencing rules
+## Mandatory task flow
 
-When the user asks to "do all tasks" or work through multiple tasks:
-- Move **one** task to `progress`; keep the rest in `ready`
-- Implement the task, then move it to `done`
-- Only then advance the next `ready` task to `progress`
-- Never put multiple tasks in `progress` simultaneously unless explicitly asked to work in parallel
+Every task MUST follow this flow in order — no skipping steps:
+
+```
+backlog → (prepare) → ready → (start) → progress → testing → (tested) → done
+```
+
+| Step | Command | What happens |
+|------|---------|-------------|
+| 1 | `/kanban:prepare <id>` | Spawns plan agent, stores plan on task, moves to `ready` |
+| 2 | `/kanban:start <id>` | Moves to `progress`, starts session |
+| 3 | *(implement)* | Do the actual work |
+| 4 | `kanban_move_card` → `testing` | Signal work is done, needs verification |
+| 5 | *(test)* | Verify the implementation actually works |
+| 6 | `kanban_move_card` → `done` | Only after testing passes |
+
+**Never move a task from `backlog` directly to `progress`.** A task without a plan cannot be started.
+
+## New work hook
 
 **A `UserPromptSubmit` hook fires automatically on every message.** When no task is in progress, it injects a reminder asking you to classify the request:
 
-- **Non-trivial** (bug fix, feature, refactor, 2+ steps, touches multiple files) → call `/kanban:start <title>` before writing any code. This creates the task (if new) or moves it to `progress`.
-- **Trivial** (single command, status check, cache clear, one-liner, answering a question) → proceed without creating a task.
+- **Non-trivial** (bug fix, feature, refactor, 2+ steps, touches multiple files) → create the task with `add_feature`, then run `/kanban:prepare <id>`, then `/kanban:start <id>`.
+- **Trivial** (single command, status check, cache clear, one-liner, answering a question) → proceed without a task.
 
 Do not skip this classification. When in doubt, lean toward creating a task.
+
+## Task sequencing rules
+
+When working through multiple tasks:
+- Move **one** task to `progress` at a time
+- Complete the full flow (progress → testing → done) before advancing the next task
+- Never put multiple tasks in `progress` simultaneously unless explicitly asked
 
 ## Development
 

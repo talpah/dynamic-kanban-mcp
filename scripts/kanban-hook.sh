@@ -40,14 +40,16 @@ except Exception:
 
 # No active task — inject judgment prompt
 cat <<'EOF'
-⚠️  No kanban task is currently in progress. Before proceeding, classify this request:
+⚠️  No kanban task is currently in progress. Classify this request before proceeding:
 
-  NON-TRIVIAL → create + start a task first (then continue with the work):
-    Examples: bug fix, new feature, refactor, multi-step change, anything touching 2+ files
-    Action: call add_feature (title, priority, effort) then kanban_move_card to "progress"
+  NON-TRIVIAL (bug fix, feature, refactor, 2+ steps, touches multiple files):
+    Required flow — do not skip steps:
+      1. add_feature → creates task in backlog
+      2. /kanban:prepare <id> → generates plan, moves to ready
+      3. /kanban:start <id> → moves to progress, then begin work
 
-  TRIVIAL → proceed immediately without a task:
-    Examples: single command, status check, cache clear, answering a question, one-liner edit
+  TRIVIAL (single command, status check, cache clear, one-liner, answering a question):
+    Proceed immediately without creating a task.
 
 Use your judgment. When in doubt, lean toward creating a task.
 EOF
