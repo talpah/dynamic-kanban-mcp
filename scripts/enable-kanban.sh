@@ -94,14 +94,16 @@ else
     echo "[4/5] Updated kanban-hook.sh in ${HOOK_DIR}"
 fi
 
-# 5. Add kanban skill permissions to .claude/settings.local.json
+# 5. Register hook + add skill permissions to .claude/settings.local.json
 mkdir -p "${PROJECT_ROOT}/.claude"
-PROJECT_ROOT="${PROJECT_ROOT}" python3 << 'PYEOF'
+PROJECT_ROOT="${PROJECT_ROOT}" HOOK_DST="${HOOK_DST}" python3 << 'PYEOF'
 import json
 import os
 from pathlib import Path
 
 settings_file = Path(os.environ["PROJECT_ROOT"]) / ".claude" / "settings.local.json"
+hook_cmd = f"bash {os.environ['HOOK_DST']}"
+
 kanban_skills = [
     "Skill(kanban:setup)",
     "Skill(kanban:status)",
@@ -123,14 +125,25 @@ if settings_file.exists():
     except json.JSONDecodeError:
         settings = {}
 
-# Kanban skill permissions (allow autonomous invocation without user prompt)
+# Register UserPromptSubmit hook
+hooks = settings.setdefault("hooks", {})
+ups = hooks.setdefault("UserPromptSubmit", [])
+already = any(
+    any(h.get("command") == hook_cmd for h in entry.get("hooks", []))
+    for entry in ups
+)
+if not already:
+    ups.append({"hooks": [{"type": "command", "command": hook_cmd}]})
+    print("[5/5] Registered UserPromptSubmit hook in settings.local.json")
+else:
+    print("[5/5] UserPromptSubmit hook already registered, skipped")
+
+# Kanban skill permissions
 allow_list: list = settings.setdefault("permissions", {}).setdefault("allow", [])
 added = [s for s in kanban_skills if s not in allow_list]
 allow_list.extend(added)
 if added:
-    print(f"[5/5] Added {len(added)} kanban skill permission(s) to settings.local.json")
-else:
-    print("[5/5] Kanban skill permissions already present, skipped")
+    print(f"      Added {len(added)} kanban skill permission(s)")
 
 settings_file.write_text(json.dumps(settings, indent=2) + "\n")
 PYEOF
