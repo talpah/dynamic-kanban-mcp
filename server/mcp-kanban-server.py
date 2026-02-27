@@ -144,6 +144,13 @@ class KanbanMCPServer:
         )
 
         self.server.add_tool(
+            "kanban_get_backlog_tasks",
+            "Get all tasks in the backlog (not yet prepared/ready for development)",
+            {"type": "object", "properties": {}, "additionalProperties": False},
+            self.handle_get_backlog_tasks,
+        )
+
+        self.server.add_tool(
             "kanban_get_next_task",
             "Get the highest priority task ready for development",
             {"type": "object", "properties": {}, "additionalProperties": False},
@@ -694,6 +701,21 @@ Recent Activity: {len(progress.get("activity", []))} actions logged"""
         task_list = "📋 Ready Tasks:\n\n"
         for task in ready_tasks:
             task_list += f"🎯 **{task['id']}**: {task['title']}\n"
+            task_list += f"   {task['priority']} priority\n"
+            task_list += f"   Description: {task['description']}\n\n"
+
+        return task_list
+
+    def handle_get_backlog_tasks(self, arguments: dict[str, Any]) -> str:
+        """Get all backlog tasks"""
+        backlog_tasks = self.kanban.get_backlog_tasks()
+
+        if not backlog_tasks:
+            return "No tasks are currently in the backlog."
+
+        task_list = "📋 Backlog Tasks:\n\n"
+        for task in backlog_tasks:
+            task_list += f"📥 **{task['id']}**: {task['title']}\n"
             task_list += f"   {task['priority']} priority\n"
             task_list += f"   Description: {task['description']}\n\n"
 

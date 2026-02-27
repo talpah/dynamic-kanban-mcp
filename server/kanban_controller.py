@@ -379,6 +379,19 @@ class KanbanController:
 
         return ready_tasks
 
+    def get_backlog_tasks(self) -> list[dict]:
+        """Get all tasks currently in the backlog"""
+        progress = self.load_progress()
+        board_state = progress["boardState"]
+
+        backlog_tasks = []
+        for feature in self.features:
+            current_status = feature.get("status", board_state.get(feature["id"], "backlog"))
+            if current_status == "backlog":
+                backlog_tasks.append(feature)
+
+        return backlog_tasks
+
     def validate_dependencies(self, task_id: str) -> dict[str, Any]:
         """Validate if a task's dependencies are properly completed and check for circular deps"""
         progress = self.load_progress()
