@@ -190,12 +190,17 @@ class KanbanController:
         self._save_features_to_file()
 
     def _save_features_to_file(self):
-        """Save current features to features.json file for persistence"""
+        """Save current features to features.json file for persistence (atomic write)"""
         try:
             features_file = Path(CONFIG.get_features_file_path())
             features_file.parent.mkdir(parents=True, exist_ok=True)
-            with open(features_file, "w", encoding="utf-8") as f:
+            temp_file = str(features_file) + ".tmp"
+            with open(temp_file, "w", encoding="utf-8") as f:
                 json.dump(self.features, f, indent=2)
+            # Verify written file is valid JSON before replacing
+            with open(temp_file, encoding="utf-8") as f:
+                json.load(f)
+            os.replace(temp_file, features_file)
             self.logger.info(f"Saved {len(self.features)} features to {features_file}")
         except Exception as e:
             self.logger.error(f"Failed to save features to file: {e}")

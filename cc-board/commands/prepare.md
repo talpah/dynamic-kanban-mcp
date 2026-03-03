@@ -35,6 +35,10 @@ Explore the codebase relevant to this task, then produce a concise implementatio
 - Any risks, blockers, or dependencies to flag
 
 Keep the plan under 300 words. Return only the plan text, no preamble.
+
+IMPORTANT: Do NOT call any MCP tools that modify data. Do not call add_feature, import_features,
+update_task_plan, kanban_move_card, clear_kanban, reset_board, or any other write operation.
+Your only job is to explore the codebase and return plan text. The calling agent handles all writes.
 ```
 
 Fill in `<task_id>`, `<title>`, `<description>` from the `get_task_details` result.

@@ -901,7 +901,7 @@ function editTask(taskId) {
         idDisplay.onclick = () => copyTaskId(idDisplay, feature.id);
     }
     document.getElementById('editTaskTitle').value = feature.title;
-    document.getElementById('editTaskDescription').value = feature.description;
+    document.getElementById('editTaskDescription').value = feature.description || '';
     document.getElementById('editTaskPriority').value = feature.priority;
     document.getElementById('editTaskAcceptance').value = feature.acceptance || '';
     document.getElementById('editTaskPlan').value = feature.plan || '';
